@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Конспекты</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=PT+Sans:wght@400;700&family=PT+Serif:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f7f9fc;--grid:#dce6f2;--ink:#1b2a4a;--soft:#5b6b88;--line:#c9d6e8;--pen:#d6453d;--mark:#fff3a3;--panel:#ffffff;--acc:#2447a8}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#121826;--grid:#1d2740;--ink:#e6ecf8;--soft:#97a5c2;--line:#2a3857;--pen:#ff7a70;--mark:#4a4417;--panel:#192135;--acc:#8fb0ff}}
+*{box-sizing:border-box}
+html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "PT Sans",system-ui,sans-serif}
+.app{display:grid;grid-template-columns:290px 1fr;min-height:100vh}
+aside{background:var(--panel);border-right:1px solid var(--line);padding:18px 14px;position:sticky;top:0;height:100vh;overflow:auto}
+aside h1{font:700 20px "PT Serif",serif;margin:0 0 4px}
+.sub{color:var(--soft);font-size:13px;margin-bottom:14px}
+details{margin:2px 0}summary{cursor:pointer;padding:5px 6px;border-radius:6px;font-weight:700;list-style:none}
+summary::-webkit-details-marker{display:none}summary:hover{background:var(--grid)}
+details details{margin-left:12px}details details summary{font-weight:400;color:var(--soft)}
+.topic{display:block;margin-left:24px;padding:4px 8px;border-radius:6px;color:var(--ink);text-decoration:none}
+.topic:hover{background:var(--grid)}.topic.on{background:var(--mark);font-weight:700}
+.adm{display:inline-flex;gap:2px;margin-left:6px;opacity:.8}
+.adm button,.ic{border:0;background:none;color:var(--acc);cursor:pointer;font:inherit;font-size:13px;padding:0 3px}
+main{padding:28px clamp(16px,5vw,64px) 80px;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px;position:relative}
+main::before{content:"";position:absolute;left:clamp(8px,2.2vw,32px);top:0;bottom:0;width:2px;background:var(--pen);opacity:.55}
+.sheet{max-width:780px}
+.crumb{color:var(--soft);font-size:14px;margin-bottom:6px}
+h2.title{font:700 clamp(26px,5vw,38px)/1.15 "PT Serif",serif;margin:0 0 22px}
+.blk{margin:16px 0;font-family:"PT Serif",serif;line-height:1.65}
+.blk p{margin:.4em 0}.blk ul{margin:.4em 0;padding-left:22px}
+.rule{background:var(--mark);padding:12px 16px;border-radius:4px;border-left:4px solid var(--pen)}
+.rule b.l{font:700 13px "PT Sans",sans-serif;display:block;margin-bottom:2px;color:var(--pen)}
+.h{font:700 22px/1.3 "PT Serif",serif;margin:28px 0 6px}
+.ex{background:var(--panel);border:1.5px solid var(--line);border-left:4px solid var(--acc);border-radius:4px;padding:12px 16px}
+.ex b.l{font:700 13px "PT Sans",sans-serif;display:block;margin-bottom:2px;color:var(--acc)}
+textarea:focus,input:focus{outline:2px solid var(--acc);outline-offset:1px}
+.hint{font-size:13px;color:var(--soft)}
+.btn{background:var(--acc);color:#fff;border:0;border-radius:6px;padding:8px 14px;font:700 14px "PT Sans",sans-serif;cursor:pointer}
+.btn.alt{background:none;color:var(--acc);border:1.5px solid var(--acc)}
+.bar{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.edit{background:var(--panel);border:1.5px solid var(--acc);border-radius:8px;padding:10px;margin:12px 0}
+.edit .row{display:flex;gap:6px;margin-bottom:6px}.edit select{width:auto}
+.edit textarea{min-height:90px}
+.top{display:none}
+.toast{position:fixed;bottom:calc(16px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;z-index:9;max-width:90vw}
+.empty{color:var(--soft);padding:30px 0}
+@media (max-width:820px){
+ .app{display:block}
+ aside{position:static;height:auto;max-height:55vh;border-right:0;border-bottom:1px solid var(--line)}
+ main{padding-top:20px}
+}
+@media print{aside,.bar,.adm,.edit,.toast{display:none!important}.app{display:block}main{background:none}main::before{display:none}}
+</style>
+</head>
+<body>
+<div class="app">
+ <aside>
+  <h1>Конспекты</h1>
+  <div class="sub">Классы, разделы и темы</div>
+  <div id="tree"></div>
+  <div class="bar" id="adminbar"></div>
+ </aside>
+ <main><div class="sheet" id="view"></div></main>
+</div>
+<div class="toast" id="toast" hidden></div>
+<script>
+/* ===== НАСТРОЙКИ: впишите свой репозиторий ===== */
+const REPO   = "ВАШ_ЛОГИН/ИМЯ_РЕПОЗИТОРИЯ";
+const BRANCH = "main";
+const FILE   = "data/content.json";
+/* =============================================== */
+
+const $ = s => document.querySelector(s);
+const uid = () => Math.random().toString(36).slice(2, 9);
+const LS = { get:(k,d)=>{try{return localStorage.getItem(k)??d}catch{return d}}, set:(k,v)=>{try{localStorage.setItem(k,v)}catch{}}, del:k=>{try{localStorage.removeItem(k)}catch{}} };
+let data = {classes:[]}, token = LS.get("wiki_token",""), edit = false, dirty = false, cur = null;
+
+const esc = s => String(s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function md(t){
+  const inl = s => esc(s).replace(/\*\*(.+?)\*\*/g,"<b>$1</b>").replace(/\*(.+?)\*/g,"<i>$1</i>");
+  return String(t).split(/\n\s*\n/).map(p=>{
+    const ls = p.split("\n");
+    if(ls.every(l=>/^\s*[-•]\s+/.test(l))) return "<ul>"+ls.map(l=>"<li>"+inl(l.replace(/^\s*[-•]\s+/,""))+"</li>").join("")+"</ul>";
+    return "<p>"+ls.map(inl).join("<br>")+"</p>";
+  }).join("");
+}
+function toast(m){const t=$("#toast");t.textContent=m;t.hidden=false;clearTimeout(toast.h);toast.h=setTimeout(()=>t.hidden=true,3500)}
+
+/* ---------- данные ---------- */
+async function load(){
+  try{ const r = await fetch(FILE+"?v="+Date.now(),{cache:"no-store"}); if(r.ok) data = await r.json(); }catch{}
+  route();
+}
+function find(id){
+  for(const c of data.classes){ if(c.id===id) return {node:c,arr:data.classes};
+    for(const s of c.sections){ if(s.id===id) return {node:s,arr:c.sections,cls:c};
+      for(const t of s.topics) if(t.id===id) return {node:t,arr:s.topics,cls:c,sec:s}; } }
+  return null;
+}
+function mark(){ dirty = true; renderBar(); }
+window.addEventListener("beforeunload",e=>{ if(dirty){e.preventDefault();e.returnValue=""} });
+
+/* ---------- навигация ---------- */
+function route(){ cur = location.hash.slice(1) || null; if(!cur){ const t=firstTopic(); if(t) cur=t; } renderTree(); renderView(); }
+function firstTopic(){ for(const c of data.classes) for(const s of c.sections) if(s.topics[0]) return s.topics[0].id; return null; }
+window.addEventListener("hashchange",route);
+
+function renderTree(){
+  const here = cur && find(cur);
+  const a = x => edit ? `<span class="adm">${x}</span>` : "";
+  $("#tree").innerHTML = data.classes.length ? data.classes.map(c=>{
+    const openC = here && here.cls && here.cls.id===c.id;
+    return `<details ${openC?"open":""}><summary>${esc(c.title)}${a(`<button data-a="addsec" data-id="${c.id}" title="Добавить раздел">+</button><button data-a="ren" data-id="${c.id}" title="Переименовать">✎</button><button data-a="del" data-id="${c.id}" title="Удалить">✕</button>`)}</summary>`+
+      c.sections.map(s=>`<details ${here&&here.sec&&here.sec.id===s.id?"open":""}><summary>${esc(s.title)}${a(`<button data-a="addtop" data-id="${s.id}" title="Добавить тему">+</button><button data-a="ren" data-id="${s.id}">✎</button><button data-a="del" data-id="${s.id}">✕</button>`)}</summary>`+
+        s.topics.map(t=>`<a class="topic ${t.id===cur?"on":""}" href="#${t.id}">${esc(t.title)}</a>${a(`<button data-a="ren" data-id="${t.id}">✎</button><button data-a="del" data-id="${t.id}">✕</button>`)}`).join("")+`</details>`).join("")+`</details>`;
+  }).join("") : `<div class="empty">Пока пусто.${edit?"":" Войдите как админ, чтобы добавить классы."}</div>`;
+}
+$("#tree").addEventListener("click",e=>{
+  const b=e.target.closest("button[data-a]"); if(!b) return; e.preventDefault(); e.stopPropagation();
+  const id=b.dataset.id, f=find(id), act=b.dataset.a;
+  if(act==="addsec"){const n=prompt("Название раздела (например, Алгебра):"); if(n){f.node.sections.push({id:uid(),title:n,topics:[]});mark();renderTree()}}
+  if(act==="addtop"){const n=prompt("Название темы:"); if(n){const t={id:uid(),title:n,blocks:[]};f.node.topics.push(t);mark();location.hash=t.id}}
+  if(act==="ren"){const n=prompt("Новое название:",f.node.title); if(n){f.node.title=n;mark();renderTree();renderView()}}
+  if(act==="del"){if(confirm("Удалить «"+f.node.title+"» вместе со всем содержимым?")){f.arr.splice(f.arr.indexOf(f.node),1);mark();if(cur===id||!find(cur))location.hash="";route()}}
+});
+
+/* ---------- просмотр / редактор темы ---------- */
+function renderView(){
+  const v=$("#view"), f=cur&&find(cur);
+  if(!f||!f.sec){ v.innerHTML=`<div class="empty">${data.classes.length?"Выберите тему слева.":"Конспектов пока нет."}</div>`; return; }
+  const t=f.node;
+  let h=`<div class="crumb">${esc(f.cls.title)} › ${esc(f.sec.title)}</div><h2 class="title">${esc(t.title)}</h2>`;
+  if(edit){
+    h+=t.blocks.map((b,i)=>`<div class="edit" data-i="${i}"><div class="row">
+      <select data-f="t"><option value="text" ${b.t==="text"?"selected":""}>Текст</option><option value="rule" ${b.t==="rule"?"selected":""}>Запомни (правило)</option><option value="head" ${b.t==="head"?"selected":""}>Заголовок</option><option value="ex" ${b.t==="ex"?"selected":""}>Пример</option></select>
+      <button class="ic" data-m="-1" title="Выше">↑</button><button class="ic" data-m="1" title="Ниже">↓</button><button class="ic" data-m="x" title="Удалить">✕</button></div>
+      <textarea data-f="x" placeholder="Текст. **жирный**, *курсив*, список — строки с «- »">${esc(b.x)}</textarea></div>`).join("");
+    h+=`<div class="bar"><button class="btn alt" data-add="text">+ Текст</button><button class="btn alt" data-add="rule">+ Правило</button><button class="btn alt" data-add="head">+ Заголовок</button><button class="btn alt" data-add="ex">+ Пример</button></div>`;
+  } else {
+    h+=t.blocks.map(b=>{
+      if(b.t==="head") return `<h3 class="h">${esc(b.x)}</h3>`;
+      if(b.t==="rule") return `<div class="blk rule"><b class="l">Запомни</b>${md(b.x)}</div>`;
+      if(b.t==="ex") return `<div class="blk ex"><b class="l">Пример</b>${md(b.x)}</div>`;
+      return `<div class="blk">${md(b.x)}</div>`;
+    }).join("") || `<div class="empty">В этой теме пока нет материала.</div>`;
+    h+=`<div class="bar"><button class="btn alt" onclick="print()">Распечатать конспект</button></div>`;
+  }
+  v.innerHTML=h;
+}
+$("#view").addEventListener("input",e=>{
+  const el=e.target, f=find(cur);
+  if(el.dataset.f){ const i=+el.closest(".edit").dataset.i; f.node.blocks[i][el.dataset.f]=el.value; mark(); }
+});
+$("#view").addEventListener("change",e=>{ if(e.target.dataset.f==="t"){ const i=+e.target.closest(".edit").dataset.i; find(cur).node.blocks[i].t=e.target.value; mark(); }});
+$("#view").addEventListener("click",e=>{
+  const f=find(cur); if(!f) return; const bl=f.node.blocks;
+  const add=e.target.dataset.add; if(add){ bl.push({id:uid(),t:add,x:""}); mark(); renderView(); }
+  const m=e.target.dataset.m; if(m){ const i=+e.target.closest(".edit").dataset.i;
+    if(m==="x"){ if(confirm("Удалить блок?")) bl.splice(i,1); } else { const j=i+ +m; if(j>=0&&j<bl.length) [bl[i],bl[j]]=[bl[j],bl[i]]; }
+    mark(); renderView(); }
+});
+
+/* ---------- админ ---------- */
+function renderBar(){
+  const b=$("#adminbar");
+  if(!edit){ b.innerHTML=`<button class="btn alt" id="login">Вход для учителя</button>`; $("#login").onclick=login; return; }
+  b.innerHTML=`<button class="btn alt" id="addcls">+ Класс</button><button class="btn" id="pub">Опубликовать${dirty?" •":""}</button><button class="btn alt" id="out">Выйти</button>`;
+  $("#addcls").onclick=()=>{const n=prompt("Название класса (например, 7 класс):"); if(n){data.classes.push({id:uid(),title:n,sections:[]});mark();renderTree()}};
+  $("#pub").onclick=publish;
+  $("#out").onclick=()=>{ if(dirty&&!confirm("Есть неопубликованные изменения. Выйти?"))return; LS.del("wiki_token"); token=""; location.reload(); };
+}
+function login(){
+  const t=prompt("Вставьте GitHub-токен (доступ Contents: Read and write к этому репозиторию):", token);
+  if(!t) return; token=t.trim(); LS.set("wiki_token",token); edit=true; renderBar(); renderTree(); renderView(); toast("Режим редактирования включён");
+}
+async function publish(){
+  if(!/^[^/]+\/[^/]+$/.test(REPO)||REPO.startsWith("ВАШ")) return toast("Впишите REPO в начале index.html");
+  const api=`https://api.github.com/repos/${REPO}/contents/${FILE}`, h={Authorization:"Bearer "+token,Accept:"application/vnd.github+json"};
+  try{
+    toast("Публикую…");
+    const r=await fetch(api+"?ref="+BRANCH,{headers:h,cache:"no-store"}); let sha; if(r.ok) sha=(await r.json()).sha; else if(r.status!==404) throw new Error(r.status===401?"токен не подходит":"ошибка "+r.status);
+    const content=btoa(unescape(encodeURIComponent(JSON.stringify(data,null,1))));
+    const p=await fetch(api,{method:"PUT",headers:h,body:JSON.stringify({message:"Обновление конспектов",branch:BRANCH,sha,content})});
+    if(!p.ok) throw new Error("ошибка "+p.status);
+    dirty=false; renderBar(); toast("Опубликовано. На сайте появится через ~1 минуту.");
+  }catch(err){ toast("Не удалось сохранить: "+err.message); }
+}
+if(token){ /* токен сохранён — вход одним нажатием */ }
+renderBar(); load();
+</script>
+</body>
+</html>
