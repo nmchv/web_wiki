@@ -36,7 +36,6 @@
     return out.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 50) || 'file';
   }
   function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 5); }
-  function today() { var d = new Date(); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
   function ext(name) { var m = /\.([a-z0-9]+)$/i.exec(name); return m ? m[1].toLowerCase() : ''; }
   function utf8b64(s) { return btoa(unescape(encodeURIComponent(s))); }
   function b64utf8(b) { return decodeURIComponent(escape(atob(b.replace(/\s/g, '')))); }
@@ -96,6 +95,9 @@
     attempt = attempt || 0;
     return readData(name).then(function (cur) {
       var items = fn(cur.items.slice());
+      if (name === 'notes' || name === 'slides' || name === 'works') {
+        items.forEach(function (item) { delete item.date; });
+      }
       var body = { message: message, content: utf8b64(JSON.stringify({ items: items }, null, 2) + '\n') };
       if (cur.sha) body.sha = cur.sha;
       return api('PUT', 'data/' + name + '.json', body).then(function () { return items; });
@@ -193,11 +195,10 @@
 
   /* ---------- материалы (конспекты / презентации) ---------- */
   function materials(kind) {
-    function materials(kind) {
   var isNotes = kind === 'notes';
   var isWorks = kind === 'works';
   var body = document.getElementById('body');
-    var items = cached(kind).slice().sort(function (a, b) { return String(b.date || '').localeCompare(String(a.date || '')); });
+    var items = cached(kind).slice().sort(function (a, b) { return String(b.id || '').localeCompare(String(a.id || '')); });
     var ed = view.editing ? items.filter(function (i) { return i.id === view.editing; })[0] : null;
     ed = ed || {};
 
@@ -221,8 +222,7 @@
       ? 'Тема: Литосфера'
       : 'Тема: Климат России') +
   '"></div>' +
-      '<div class="row"><div class="field"><label>Класс</label><select class="input" id="m-grade">' + gradeOptions(ed.grade || 5) + '</select></div>' +
-      '<div class="field"><label>Дата урока</label><input class="input" type="date" id="m-date" value="' + esc(ed.date || today()) + '"></div></div>' +
+      '<div class="field"><label>Класс</label><select class="input" id="m-grade">' + gradeOptions(ed.grade || 5) + '</select></div>' +
       '<div class="field"><label>Описание (необязательно)</label><textarea class="input" id="m-desc" style="min-height:80px">' + esc(ed.description || '') + '</textarea></div>' +
       ((isNotes || isWorks)
   ? '<div class="field"><label>PDF-файл' +
@@ -240,7 +240,7 @@
       '<div class="actions"><button class="btn btn--primary" type="submit">' + (ed.id ? 'Сохранить' : 'Опубликовать') + '</button>' +
       (ed.id ? '<button class="btn" type="button" id="m-cancel">Отмена</button>' : '') + '</div></form></div>' +
       '<div><div class="admin-list" id="al">' + (items.length ? items.map(function (i) {
-        return '<div class="arow"><div class="arow__t"><b>' + esc(i.title) + '</b><span>' + i.grade + ' класс · ' + W.fmtDate(i.date) +
+        return '<div class="arow"><div class="arow__t"><b>' + esc(i.title) + '</b><span>' + i.grade + ' класс' +
           (i.pptx ? ' · PPTX' : '') + (i.pdf ? ' · PDF' : '') + '</span></div><div class="arow__a">' +
           '<button class="btn btn--sm" data-e="' + i.id + '">Изменить</button><button class="btn btn--sm btn--danger" data-d="' + i.id + '">Удалить</button></div></div>';
       }).join('') : '<div class="empty">Пока пусто. Добавьте первый материал слева.</div>') + '</div></div></div>';
@@ -260,7 +260,6 @@
       var btn = e.target.querySelector('[type=submit]');
       var title = document.getElementById('m-title').value.trim();
       var grade = Number(document.getElementById('m-grade').value);
-      var date = document.getElementById('m-date').value || today();
       var desc = document.getElementById('m-desc').value.trim();
       var fPdf = document.getElementById('m-pdf').files[0];
       var fPptx = (isNotes || isWorks)
@@ -277,7 +276,7 @@
       if (big.length) { W.toast('Файл больше 95 МБ — GitHub его не примет. Сожмите картинки в презентации.', true); return; }
 
       var id = ed.id || uid();
-      var rec = { id: id, title: title, grade: grade, date: date, description: desc, pdf: ed.pdf || '', pptx: ed.pptx || '' };
+      var rec = { id: id, title: title, grade: grade, description: desc, pdf: ed.pdf || '', pptx: ed.pptx || '' };
       var dir = 'files/' + kind + '/' + grade + '/';
       var base = id + '-' + slug(title);
       var oldPaths = [];

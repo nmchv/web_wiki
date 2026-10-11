@@ -34,11 +34,6 @@
     }
     return out + safe.slice(last);
   }
-  function fmtDate(d) {
-    if (!d) return '';
-    var p = String(d).split('-');
-    return p.length === 3 ? p[2] + '.' + p[1] + '.' + p[0] : d;
-  }
   function toast(msg, isErr) {
     var t = document.getElementById('toast');
     t.textContent = msg;
@@ -87,11 +82,11 @@
       '<section class="hero"><div class="wrap">' +
         '<div class="eyebrow">Учебная вики</div>' +
         '<h1>География<br>для <em>урока</em></h1>' +
-        '<p class="hero__lead">Конспекты уроков, словарь терминов с примерами и презентации — всё, что нужно ученику, в одном месте.</p>' +
-        '<div class="hero__meta"><span><b> все права защищены </span><span>N не используйте без разрешения </span></div>' +
+        '<p class="hero__lead">Конспекты уроков, словарь терминов с примерами, презентации и практические работы — всё, что нужно ученику, в одном месте.</p>' +
+        '<div class="hero__meta"><span><b>' + cnt.notes + '</b> конспектов</span><span><b>' + cnt.terms + '</b> терминов</span><span><b>' + cnt.slides + '</b> презентаций</span><span><b>' + cnt.works + '</b> практических работ</span></div>' +
       '</div></section>' +
       '<section class="section"><div class="wrap">' +
-        '<div class="section__head"><span class="section__num">02</span><h2 class="section__title">Разделы</h2></div>' +
+        '<div class="section__head"><span class="section__num">01</span><h2 class="section__title">Разделы</h2></div>' +
         '<div class="cards">' +
           card(
   '01',
@@ -140,12 +135,12 @@ card(
       '<div class="card__foot"><span>' + count + ' ' + plural(count, a, b, c) + '</span><span>Открыть →</span></div></a>';
   }
 
-  /* общий каркас для конспектов и презентаций */
+  /* общий каталог материалов */
   function materials(kind) {
     var isNotes = kind === 'notes';
     var isWorks = kind === 'works';
     var items = DATA[kind].slice().sort(function (x, y) {
-      return String(y.date || '').localeCompare(String(x.date || '')) || (y.id > x.id ? 1 : -1);
+      return String(y.id || '').localeCompare(String(x.id || ''));
     });
     var state = { grade: 'all', q: '' };
 
@@ -162,13 +157,10 @@ card(
               ? 'Практические работы по географии. Выберите класс, найдите нужное задание и скачайте PDF.'
               : 'Презентации с уроков. Выберите класс, найдите нужное задание и скачайте PPTX или PDF.') +
         '</p></div>' +
-        '<div class="filters"><div id="chips" class="chips"></div>' +
-        '<input id="search" type="search" placeholder="Поиск по материалам…"></div>' +
+        '<div class="toolbar"><div id="chips" class="chips"></div>' +
+        '<div class="search"><input id="search" type="search" placeholder="Поиск по материалам…" aria-label="Поиск по материалам"></div></div>' +
         '<div id="out" class="materials-grid"></div>' +
       '</div></section>';
-
-    var chips = document.getElementById('chips'), out = document.getElementById('out');
-      
 
     var chips = document.getElementById('chips'), out = document.getElementById('out');
 
@@ -182,6 +174,10 @@ card(
     }
     function dl(href, label, name) {
       return '<a class="btn btn--sm btn--primary" href="' + esc(encodeURI(href)) + '" download="' + esc(name || '') + '">' + label + '</a>';
+    }
+    function pdfPreview(href, title) {
+      return '<button class="btn btn--sm btn--primary" type="button" data-pdf="' + esc(href) +
+        '" data-pdf-title="' + esc(title) + '">Просмотреть PDF</button>';
     }
     function draw() {
       var q = norm(state.q).trim();
@@ -201,11 +197,10 @@ card(
         part.forEach(function (i) {
           var base = String(i.title).replace(/[\\/:*?"<>|]+/g, '').trim();
           var acts = '';
-          var acts = '';
 
 if (isNotes || isWorks) {
   if (i.pdf) {
-    acts += dl(i.pdf, 'Скачать PDF', base + '.pdf');
+    acts += pdfPreview(i.pdf, i.title) + dl(i.pdf, 'Скачать PDF', base + '.pdf');
   }
 } else {
   if (i.pptx) {
@@ -213,10 +208,10 @@ if (isNotes || isWorks) {
   }
 
   if (i.pdf) {
-    acts += dl(i.pdf, 'Скачать PDF', base + '.pdf');
+    acts += pdfPreview(i.pdf, i.title) + dl(i.pdf, 'Скачать PDF', base + '.pdf');
   }
 }
-          html += '<article class="item"><div class="item__meta"><span>' + fmtDate(i.date) + '</span>' + (i.topic ? '<span class="tag">' + esc(i.topic) + '</span>' : '') + '</div>' +
+          html += '<article class="item">' + (i.topic ? '<div class="item__meta"><span class="tag">' + esc(i.topic) + '</span></div>' : '') +
             '<h3>' + highlight(i.title, state.q) + '</h3>' +
             (i.description ? '<p>' + esc(i.description) + '</p>' : '') +
             '<div class="item__act">' + (acts || '<span class="tag">файл не прикреплён</span>') + '</div></article>';
@@ -231,7 +226,7 @@ if (isNotes || isWorks) {
       state.grade = b.dataset.g === 'all' ? 'all' : Number(b.dataset.g);
       drawChips(); draw();
     });
-    document.getElementById('q').addEventListener('input', function (e) { state.q = e.target.value; draw(); });
+    document.getElementById('search').addEventListener('input', function (e) { state.q = e.target.value; draw(); });
     drawChips(); draw();
   }
 
@@ -331,11 +326,31 @@ if (isNotes || isWorks) {
     var n = document.getElementById('nav'), open = n.classList.toggle('is-open');
     this.setAttribute('aria-expanded', open ? 'true' : 'false');
   });
+  app.addEventListener('click', function (e) {
+    var button = e.target.closest('[data-pdf]');
+    if (!button) return;
+    var viewer = document.getElementById('pdf-viewer');
+    var frame = viewer.querySelector('iframe');
+    var url = encodeURI(button.dataset.pdf);
+    viewer.querySelector('#pdf-viewer-title').textContent = button.dataset.pdfTitle;
+    viewer.querySelector('[data-pdf-download]').href = url;
+    viewer.querySelector('[data-pdf-download]').download =
+      String(button.dataset.pdfTitle).replace(/[\\/:*?"<>|]+/g, '').trim() + '.pdf';
+    frame.src = url + '#view=FitH';
+    if (typeof viewer.showModal === 'function') viewer.showModal();
+    else window.open(url, '_blank', 'noopener');
+  });
+  document.querySelector('[data-pdf-close]').addEventListener('click', function () {
+    document.getElementById('pdf-viewer').close();
+  });
+  document.getElementById('pdf-viewer').addEventListener('close', function () {
+    this.querySelector('iframe').src = 'about:blank';
+  });
   window.addEventListener('hashchange', route);
 
   /* экспорт для админки */
   window.Wiki = {
-    CLASSES: CLASSES, DATA: DATA, esc: esc, toast: toast, fmtDate: fmtDate, norm: norm,
+    CLASSES: CLASSES, DATA: DATA, esc: esc, toast: toast, norm: norm,
     reload: function () { return loadAll(); },
     refresh: route
   };

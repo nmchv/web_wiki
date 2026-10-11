@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Вики — Алексей Немичев · География</title>
-  <meta name="description" content="Материалы по географии. Учитель географии Алексей Немичев, школа №116.">
+  <title>Учебная вики — Алексей Немичев</title>
+  <meta name="description" content="Учебные материалы Алексея Немичева: конспекты, термины, презентации и практические работы по географии.">
   <meta name="theme-color" content="#08090B">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2308090B'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%237CE0C3' stroke-width='2'/%3E%3Cpath d='M7 16h18M16 7c4 4 4 14 0 18M16 7c-4 4-4 14 0 18' fill='none' stroke='%237CE0C3' stroke-width='1.5'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -49,6 +49,17 @@
   </footer>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <dialog class="pdf-viewer" id="pdf-viewer" aria-labelledby="pdf-viewer-title">
+    <div class="pdf-viewer__head">
+      <h2 id="pdf-viewer-title"></h2>
+      <button class="btn btn--sm" type="button" data-pdf-close>Закрыть</button>
+    </div>
+    <iframe title="Просмотр PDF" src="about:blank"></iframe>
+    <div class="pdf-viewer__foot">
+      <a class="btn btn--sm" data-pdf-download download>Скачать PDF</a>
+    </div>
+  </dialog>
 
   <script src="assets/app.js"></script>
   <script src="assets/admin.js"></script>
