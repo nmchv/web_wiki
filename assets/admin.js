@@ -135,7 +135,13 @@
 
   /* ---------- каркас ---------- */
   function shell() {
-    var tabs = [['notes', 'Конспекты'], ['slides', 'Презентации'], ['terms', 'Термины'], ['settings', 'Настройки']];
+    var tabs = [
+  ['notes', 'Конспекты'],
+  ['slides', 'Презентации'],
+  ['works', 'Практические работы'],
+  ['terms', 'Термины'],
+  ['settings', 'Настройки']
+];
     root.innerHTML =
       '<section class="page"><div class="wrap">' +
       '<div class="page__top"><span class="eyebrow">Админ-панель</span><h1>Управление</h1>' +
@@ -187,23 +193,49 @@
 
   /* ---------- материалы (конспекты / презентации) ---------- */
   function materials(kind) {
-    var isNotes = kind === 'notes';
-    var body = document.getElementById('body');
+    function materials(kind) {
+  var isNotes = kind === 'notes';
+  var isWorks = kind === 'works';
+  var body = document.getElementById('body');
     var items = cached(kind).slice().sort(function (a, b) { return String(b.date || '').localeCompare(String(a.date || '')); });
     var ed = view.editing ? items.filter(function (i) { return i.id === view.editing; })[0] : null;
     ed = ed || {};
 
     body.innerHTML =
-      '<div class="admin-grid"><div class="panel"><h2>' + (ed.id ? 'Изменить' : (isNotes ? 'Новый конспект' : 'Новая презентация')) + '</h2>' +
+      '<div class="admin-grid"><div class="panel"><h2>' +
+  (ed.id
+    ? 'Изменить'
+    : isWorks
+      ? 'Новая практическая работа'
+      : isNotes
+        ? 'Новый конспект'
+        : 'Новая презентация') +
+'</h2>' +
       '<form id="mf">' +
-      '<div class="field"><label>Название</label><input class="input" id="m-title" required value="' + esc(ed.title || '') + '" placeholder="' + (isNotes ? 'Тема: Литосфера' : 'Тема: Климат России') + '"></div>' +
+      '<div class="field"><label>Название</label><input class="input" id="m-title" required value="' +
+  esc(ed.title || '') +
+  '" placeholder="' +
+  (isWorks
+    ? 'Например: Сравнение двух рек'
+    : isNotes
+      ? 'Тема: Литосфера'
+      : 'Тема: Климат России') +
+  '"></div>' +
       '<div class="row"><div class="field"><label>Класс</label><select class="input" id="m-grade">' + gradeOptions(ed.grade || 5) + '</select></div>' +
       '<div class="field"><label>Дата урока</label><input class="input" type="date" id="m-date" value="' + esc(ed.date || today()) + '"></div></div>' +
       '<div class="field"><label>Описание (необязательно)</label><textarea class="input" id="m-desc" style="min-height:80px">' + esc(ed.description || '') + '</textarea></div>' +
-      (isNotes
-        ? '<div class="field"><label>PDF-файл' + (ed.pdf ? ' (оставьте пустым, чтобы не менять)' : '') + '</label><input type="file" id="m-pdf" accept=".pdf,application/pdf"></div>'
-        : '<div class="field"><label>PPTX-файл' + (ed.pptx ? ' (оставьте пустым, чтобы не менять)' : '') + '</label><input type="file" id="m-pptx" accept=".pptx,.ppt"></div>' +
-          '<div class="field"><label>PDF-файл' + (ed.pdf ? ' (оставьте пустым, чтобы не менять)' : '') + '</label><input type="file" id="m-pdf" accept=".pdf,application/pdf"></div>') +
+      ((isNotes || isWorks)
+  ? '<div class="field"><label>PDF-файл' +
+      (ed.pdf ? ' (оставьте пустым, чтобы не менять)' : '') +
+    '</label><input type="file" id="m-pdf" accept=".pdf,application/pdf"' +
+      (!ed.pdf ? ' required' : '') +
+    '></div>'
+  : '<div class="field"><label>PPTX-файл' +
+      (ed.pptx ? ' (оставьте пустым, чтобы не менять)' : '') +
+    '</label><input type="file" id="m-pptx" accept=".pptx,.ppt"></div>' +
+    '<div class="field"><label>PDF-файл' +
+      (ed.pdf ? ' (оставьте пустым, чтобы не менять)' : '') +
+    '</label><input type="file" id="m-pdf" accept=".pdf,application/pdf"></div>') +
       '<div class="progress"><i></i></div>' +
       '<div class="actions"><button class="btn btn--primary" type="submit">' + (ed.id ? 'Сохранить' : 'Опубликовать') + '</button>' +
       (ed.id ? '<button class="btn" type="button" id="m-cancel">Отмена</button>' : '') + '</div></form></div>' +
@@ -231,9 +263,14 @@
       var date = document.getElementById('m-date').value || today();
       var desc = document.getElementById('m-desc').value.trim();
       var fPdf = document.getElementById('m-pdf').files[0];
-      var fPptx = isNotes ? null : document.getElementById('m-pptx').files[0];
+      var fPptx = (isNotes || isWorks)
+  ? null
+  : document.getElementById('m-pptx').files[0];
 
-      if (!ed.id && !fPdf && !fPptx) { W.toast('Прикрепите файл', true); return; }
+      if (!ed.id && !fPdf && !fPptx) {
+  W.toast('Прикрепите файл', true);
+  return;
+}
       if (fPdf && ext(fPdf.name) !== 'pdf') { W.toast('PDF-поле: нужен файл .pdf', true); return; }
       if (fPptx && ['pptx', 'ppt'].indexOf(ext(fPptx.name)) < 0) { W.toast('PPTX-поле: нужен файл .pptx', true); return; }
       var big = [fPdf, fPptx].filter(Boolean).filter(function (f) { return f.size > 95 * 1024 * 1024; });
