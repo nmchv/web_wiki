@@ -149,19 +149,25 @@ card(
     });
     var state = { grade: 'all', q: '' };
 
-    app.innerHTML =
+        app.innerHTML =
       '<section class="page"><div class="wrap">' +
         '<div class="page__top"><span class="eyebrow">' +
-  (isNotes ? '01 · Конспекты' : isWorks ? '04 · Практические работы' : '03 · Презентации') +
-'</span>' +
-'<h1>' + (isNotes ? 'Конспекты' : isWorks ? 'Практические работы' : 'Презентации') + '</h1>' +
-'<p>' +
-  (isNotes
-    ? 'Конспекты, которые мы записываем на уроках. Выберите класс и скачайте PDF.'
-    : isWorks
-      ? 'Практические работы по географии. Выберите класс, найдите нужное задание и скачайте PDF.'
-      : 'Презентации с уроков. Выберите класс и скачайте PPTX или PDF.') +
-'</p></div>' +
+          (isNotes ? '01 · Конспекты' : isWorks ? '04 · Практические работы' : '03 · Презентации') +
+        '</span>' +
+        '<h1>' + (isNotes ? 'Конспекты' : isWorks ? 'Практические работы' : 'Презентации') + '</h1>' +
+        '<p>' +
+          (isNotes
+            ? 'Конспекты, которые мы записываем на уроках. Выберите класс и скачайте PDF.'
+            : isWorks
+              ? 'Практические работы по географии. Выберите класс, найдите нужное задание и скачайте PDF.'
+              : 'Презентации с уроков. Выберите класс, найдите нужное задание и скачайте PPTX или PDF.') +
+        '</p></div>' +
+        '<div class="filters"><div id="chips" class="chips"></div>' +
+        '<input id="search" type="search" placeholder="Поиск по материалам…"></div>' +
+        '<div id="out" class="materials-grid"></div>' +
+      '</div></section>';
+
+    var chips = document.getElementById('chips'), out = document.getElementById('out');
       
 
     var chips = document.getElementById('chips'), out = document.getElementById('out');
