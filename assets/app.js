@@ -78,7 +78,10 @@
   /* ---------- страницы ---------- */
   function home() {
     var cnt = {
-      notes: DATA.notes.length, terms: DATA.terms.length, slides: DATA.slides.length
+      notes: DATA.notes.length,
+      terms: DATA.terms.length,
+      slides: DATA.slides.length,
+      works: DATA.works.length
     };
     app.innerHTML =
       '<section class="hero"><div class="wrap">' +
@@ -90,9 +93,46 @@
       '<section class="section"><div class="wrap">' +
         '<div class="section__head"><span class="section__num">02</span><h2 class="section__title">Разделы</h2></div>' +
         '<div class="cards">' +
-          card('01', 'Конспекты', 'Записи с уроков по классам. Скачать можно в PDF.', cnt.notes, 'материал', 'материала', 'материалов', '#/notes') +
-          card('02', 'Термины', 'Библиотека определений с примерами. Найдите нужный термин через поиск.', cnt.terms, 'термин', 'термина', 'терминов', '#/terms') +
-          card('03', 'Презентации', 'Слайды с уроков по классам. Скачать можно в PPTX и PDF.', cnt.slides, 'презентация', 'презентации', 'презентаций', '#/slides') +
+          card(
+  '01',
+  'Конспекты',
+  'Записи с уроков по классам. Скачать можно в PDF.',
+  cnt.notes,
+  'материал',
+  'материала',
+  'материалов',
+  '#/notes'
+) +
+card(
+  '02',
+  'Термины',
+  'Библиотека определений с примерами. Найдите нужный термин через поиск.',
+  cnt.terms,
+  'термин',
+  'термина',
+  'терминов',
+  '#/terms'
+) +
+card(
+  '03',
+  'Презентации',
+  'Слайды с уроков по классам. Скачать можно в PPTX и PDF.',
+  cnt.slides,
+  'презентация',
+  'презентации',
+  'презентаций',
+  '#/slides'
+) +
+card(
+  '04',
+  'Практические работы',
+  'Практические задания по географии. Скачать можно в PDF.',
+  cnt.works,
+  'работа',
+  'работы',
+  'работ',
+  '#/works'
+) +
         '</div></div></section>';
   }
   function card(n, t, d, count, a, b, c, href) {
@@ -103,6 +143,7 @@
   /* общий каркас для конспектов и презентаций */
   function materials(kind) {
     var isNotes = kind === 'notes';
+    var isWorks = kind === 'works';
     var items = DATA[kind].slice().sort(function (x, y) {
       return String(y.date || '').localeCompare(String(x.date || '')) || (y.id > x.id ? 1 : -1);
     });
@@ -110,12 +151,18 @@
 
     app.innerHTML =
       '<section class="page"><div class="wrap">' +
-        '<div class="page__top"><span class="eyebrow">' + (isNotes ? '01 · Конспекты' : '03 · Презентации') + '</span>' +
-        '<h1>' + (isNotes ? 'Конспекты' : 'Презентации') + '</h1>' +
-        '<p>' + (isNotes ? 'Конспекты, которые мы записываем на уроках. Выберите класс и скачайте PDF.' : 'Презентации с уроков. Выберите класс и скачайте PPTX или PDF.') + '</p></div>' +
-        '<div class="toolbar"><div class="chips" id="chips"></div>' +
-        '<div class="search"><input type="search" id="q" placeholder="Поиск по названию…" aria-label="Поиск"></div></div>' +
-        '<div id="out"></div></div></section>';
+        '<div class="page__top"><span class="eyebrow">' +
+  (isNotes ? '01 · Конспекты' : isWorks ? '04 · Практические работы' : '03 · Презентации') +
+'</span>' +
+'<h1>' + (isNotes ? 'Конспекты' : isWorks ? 'Практические работы' : 'Презентации') + '</h1>' +
+'<p>' +
+  (isNotes
+    ? 'Конспекты, которые мы записываем на уроках. Выберите класс и скачайте PDF.'
+    : isWorks
+      ? 'Практические работы по географии. Выберите класс, найдите нужное задание и скачайте PDF.'
+      : 'Презентации с уроков. Выберите класс и скачайте PPTX или PDF.') +
+'</p></div>' +
+      
 
     var chips = document.getElementById('chips'), out = document.getElementById('out');
 
@@ -148,12 +195,21 @@
         part.forEach(function (i) {
           var base = String(i.title).replace(/[\\/:*?"<>|]+/g, '').trim();
           var acts = '';
-          if (isNotes) {
-            if (i.pdf) acts += dl(i.pdf, 'Скачать PDF', base + '.pdf');
-          } else {
-            if (i.pptx) acts += dl(i.pptx, 'Скачать PPTX', base + '.pptx');
-            if (i.pdf) acts += dl(i.pdf, 'Скачать PDF', base + '.pdf');
-          }
+          var acts = '';
+
+if (isNotes || isWorks) {
+  if (i.pdf) {
+    acts += dl(i.pdf, 'Скачать PDF', base + '.pdf');
+  }
+} else {
+  if (i.pptx) {
+    acts += dl(i.pptx, 'Скачать PPTX', base + '.pptx');
+  }
+
+  if (i.pdf) {
+    acts += dl(i.pdf, 'Скачать PDF', base + '.pdf');
+  }
+}
           html += '<article class="item"><div class="item__meta"><span>' + fmtDate(i.date) + '</span>' + (i.topic ? '<span class="tag">' + esc(i.topic) + '</span>' : '') + '</div>' +
             '<h3>' + highlight(i.title, state.q) + '</h3>' +
             (i.description ? '<p>' + esc(i.description) + '</p>' : '') +
@@ -248,7 +304,13 @@
     document.getElementById('burger').setAttribute('aria-expanded', 'false');
     window.scrollTo(0, 0);
 
-    var titles = { notes: 'Конспекты', terms: 'Термины', slides: 'Презентации', admin: 'Админ' };
+    var titles = {
+  notes: 'Конспекты',
+  terms: 'Термины',
+  slides: 'Презентации',
+  works: 'Практические работы',
+  admin: 'Админ'
+};
     document.title = (titles[r] ? titles[r] + ' — ' : '') + 'Вики · Алексей Немичев';
 
     if (r === 'notes') materials('notes');
