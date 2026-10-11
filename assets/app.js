@@ -72,7 +72,7 @@
         '<div class="eyebrow">Учебная вики</div>' +
         '<h1>География<br>для <em>урока</em></h1>' +
         '<p class="hero__lead">Конспекты уроков, словарь терминов с примерами и презентации — всё, что нужно ученику, в одном месте.</p>' +
-        '<div class="hero__meta"><span><b>Школа №116</b> · пространство решений</span><span>N 47°21′ · E 39°75′</span></div>' +
+        '<div class="hero__meta"><span><b> все права защищены </span><span>N не используйте без разрешения </span></div>' +
       '</div></section>' +
       '<section class="section"><div class="wrap">' +
         '<div class="section__head"><span class="section__num">02</span><h2 class="section__title">Разделы</h2></div>' +
