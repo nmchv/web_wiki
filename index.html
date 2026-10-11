@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Вики — Алексей Немичев · География</title>
+  <meta name="description" content="Конспекты, термины и презентации по географии. Учитель географии Алексей Немичев, школа №116.">
+  <meta name="theme-color" content="#08090B">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2308090B'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%237CE0C3' stroke-width='2'/%3E%3Cpath d='M7 16h18M16 7c4 4 4 14 0 18M16 7c-4 4-4 14 0 18' fill='none' stroke='%237CE0C3' stroke-width='1.5'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Fraunces:opsz,wght@9..144,400;9..144,500&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <a class="skip" href="#app">К содержанию</a>
+
+  <header class="header" id="top">
+    <div class="wrap header__in">
+      <a class="logo" href="#/">Алексей Немичев<span class="logo__sub">/ вики</span></a>
+      <nav class="nav" id="nav" aria-label="Основное меню">
+        <a href="#/notes" data-r="notes">Конспекты</a>
+        <a href="#/terms" data-r="terms">Термины</a>
+        <a href="#/slides" data-r="slides">Презентации</a>
+      </nav>
+      <div class="header__right">
+        <a class="ghost" href="https://nmchv.ru" rel="noopener">nmchv.ru&nbsp;↗</a>
+        <a class="btn btn--admin" href="#/admin" data-r="admin">Админ</a>
+        <button class="burger" id="burger" aria-label="Меню" aria-expanded="false"><span></span><span></span></button>
+      </div>
+    </div>
+  </header>
+
+  <main id="app" tabindex="-1"></main>
+
+  <footer class="footer">
+    <div class="wrap footer__in">
+      <div>© 2026 Алексей Немичев</div>
+      <div class="footer__links">
+        <a href="#top">Наверх</a>
+        <a href="#/notes">Конспекты</a>
+        <a href="#/terms">Термины</a>
+        <a href="#/slides">Презентации</a>
+        <a href="https://github.com/nmchv" rel="noopener">GitHub</a>
+      </div>
+    </div>
+  </footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="assets/app.js"></script>
+  <script src="assets/admin.js"></script>
+</body>
+</html>
