@@ -1,18 +1,40 @@
-:root{
-  --bg:#08090B;
-  --surface:#0F1114;
-  --surface-2:#14171B;
-  --line:rgba(255,255,255,.09);
-  --line-2:rgba(255,255,255,.16);
-  --text:#EDEEF0;
-  --muted:#8A8F98;
-  --accent:#7CE0C3;        /* акцентный цвет — меняется здесь */
-  --accent-ink:#06110D;
-  --danger:#FF7A7A;
-  --radius:14px;
-  --sans:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
-  --serif:'Fraunces',Georgia,'Times New Roman',serif;
-  --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+:root {
+  /* Фоны */
+  --bg: #08090b;
+  --surface: #111318;
+  --surface-2: #191d24;
+
+  /* Границы */
+  --line: rgba(255, 255, 255, 0.09);
+  --line-2: rgba(255, 255, 255, 0.16);
+
+  /* Текст */
+  --text: #f2f4f7;
+  --muted: #969eab;
+
+  /* Акцент */
+  --accent: #5b8def;
+  --accent-ink: #08090b;
+  --danger: #ff7a7a;
+
+  /* Скругления */
+  --radius: 14px;
+
+  /* Шрифты */
+  --sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --serif: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+
+  /* Совместимость с первой системой переменных */
+  --color-background: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-elevated: var(--surface-2);
+  --color-text-primary: var(--text);
+  --color-text-secondary: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-hover: #a5c4ff;
+  --color-border: #292e38;
+}
 }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
