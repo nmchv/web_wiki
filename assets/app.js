@@ -3,7 +3,12 @@
   'use strict';
 
   var CLASSES = [5, 6, 7, 8, 9, 10, 11];
-  var DATA = { notes: [], slides: [], terms: [] };
+  var DATA = {
+  notes: [],
+  slides: [],
+  terms: [],
+  works: []
+};
   var app = document.getElementById('app');
 
   /* ---------- утилиты ---------- */
@@ -57,10 +62,18 @@
       .catch(function () { return []; });
   }
   function loadAll() {
-    return Promise.all([loadOne('notes'), loadOne('slides'), loadOne('terms')]).then(function (r) {
-      DATA.notes = r[0]; DATA.slides = r[1]; DATA.terms = r[2];
-    });
-  }
+  return Promise.all([
+    loadOne('notes'),
+    loadOne('slides'),
+    loadOne('terms'),
+    loadOne('works')
+  ]).then(function (r) {
+    DATA.notes = r[0];
+    DATA.slides = r[1];
+    DATA.terms = r[2];
+    DATA.works = r[3];
+  });
+}
 
   /* ---------- страницы ---------- */
   function home() {
@@ -241,6 +254,7 @@
     if (r === 'notes') materials('notes');
     else if (r === 'slides') materials('slides');
     else if (r === 'terms') terms();
+    else if (r === 'works') materials('works');
     else if (r === 'admin' && window.WikiAdmin) window.WikiAdmin.render(app);
     else home();
   }
