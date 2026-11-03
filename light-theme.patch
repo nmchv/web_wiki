@@ -1,0 +1,268 @@
+diff --git a/assets/style.css b/assets/style.css
+index 6f4d047..e7e0e1d 100644
+--- a/assets/style.css
++++ b/assets/style.css
+@@ -9,10 +9,33 @@
+   --accent: #7898ff;
+   --accent-soft: #a8baff;
+   --danger: #ff8585;
++  --on-accent: #08090b;                       /* текст на акцентной кнопке */
++  --header-bg: rgba(8, 9, 11, .82);
++  --globe-line: rgba(190, 202, 233, .17);
++  --card-sheen: rgba(255, 255, 255, .025);
++  color-scheme: dark;
+   --radius: 14px;
+   --sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+   --mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+ }
++/* Светлая тема: включается атрибутом data-theme="light" на <html> (его ставит assets/theme.js) */
++:root[data-theme='light'] {
++  --bg: #f5f7fa;
++  --surface: #ffffff;
++  --surface-2: #edf1f7;
++  --line: rgba(18, 22, 29, .10);
++  --line-2: rgba(18, 22, 29, .18);
++  --text: #12161d;
++  --muted: #566070;
++  --accent: #2c5fd0;
++  --accent-soft: #1b43a6;
++  --danger: #c62f3a;
++  --on-accent: #ffffff;
++  --header-bg: rgba(245, 247, 250, .85);
++  --globe-line: rgba(35, 55, 100, .18);
++  --card-sheen: rgba(44, 95, 208, .04);
++  color-scheme: light;
++}
+ * { box-sizing: border-box; }
+ html { scroll-behavior: smooth; }
+ body { min-height: 100vh; margin: 0; display: flex; flex-direction: column; background: var(--bg); color: var(--text); font: 400 16px/1.65 var(--sans); -webkit-font-smoothing: antialiased; }
+@@ -24,7 +47,7 @@ button, input, select, textarea { color: inherit; font: inherit; }
+ .skip { position: absolute; z-index: 100; top: 8px; left: -999px; padding: 8px 14px; border-radius: 8px; background: var(--accent); color: var(--bg); }
+ .skip:focus { left: 8px; }
+ 
+-.header { position: sticky; z-index: 50; top: 0; border-bottom: 1px solid var(--line); background: rgba(8, 9, 11, .82); backdrop-filter: blur(18px); }
++.header { position: sticky; z-index: 50; top: 0; border-bottom: 1px solid var(--line); background: var(--header-bg); backdrop-filter: blur(18px); }
+ .header__in { display: flex; height: 76px; align-items: center; gap: 30px; }
+ .logo { display: flex; flex-shrink: 0; align-items: center; gap: 12px; font-size: 17px; font-weight: 500; letter-spacing: -.025em; }
+ .logo__mark { display: grid; width: 35px; height: 40px; place-items: center; color: var(--accent); font-size: 34px; font-weight: 400; line-height: 1; }
+@@ -42,11 +65,11 @@ button, input, select, textarea { color: inherit; font: inherit; }
+ 
+ .btn { display: inline-flex; min-height: 42px; align-items: center; justify-content: center; gap: 9px; padding: 9px 18px; border: 1px solid var(--line-2); border-radius: 999px; background: transparent; color: var(--text); cursor: pointer; font-size: 14px; font-weight: 500; transition: border-color .2s, background .2s, color .2s, transform .2s; }
+ .btn:hover { border-color: var(--accent); transform: translateY(-1px); }
+-.btn--primary { border-color: var(--accent); background: var(--accent); color: #08090b; }
++.btn--primary { border-color: var(--accent); background: var(--accent); color: var(--on-accent); }
+ .btn--primary:hover { border-color: var(--accent-soft); background: var(--accent-soft); }
+ .btn--admin { min-height: 36px; padding: 6px 15px; font-size: 13px; }
+ .btn--sm { min-height: 34px; padding: 6px 13px; font-size: 12px; }
+-.btn--danger { border-color: rgba(255, 133, 133, .4); color: var(--danger); }.btn--danger:hover { border-color: var(--danger); }
++.btn--danger { border-color: color-mix(in srgb, var(--danger) 40%, transparent); color: var(--danger); }.btn--danger:hover { border-color: var(--danger); }
+ .btn[disabled] { opacity: .5; cursor: wait; }
+ 
+ .hero { position: relative; overflow: hidden; min-height: 650px; padding: clamp(76px, 11vw, 144px) 0 54px; border-bottom: 1px solid var(--line); }
+@@ -63,7 +86,7 @@ button, input, select, textarea { color: inherit; font: inherit; }
+ .hero__link { margin-top: 32px; }
+ .hero__visual { position: relative; display: grid; min-width: 0; place-items: center; animation: float 8s ease-in-out infinite; }
+ .globe { display: block; width: min(100%, 440px); overflow: visible; }
+-.globe__ring, .globe__grid { stroke: rgba(190, 202, 233, .17); stroke-width: 1; }
++.globe__ring, .globe__grid { stroke: var(--globe-line); stroke-width: 1; }
+ .globe__route { stroke: var(--accent); stroke-width: 2; stroke-dasharray: 400; stroke-dashoffset: 400; animation: trace 5s ease forwards .5s; }
+ .globe__point { fill: var(--accent); }
+ .globe__point--pulse { transform-box: fill-box; transform-origin: center; animation: pulse 2.2s ease-out infinite; }
+@@ -75,7 +98,7 @@ button, input, select, textarea { color: inherit; font: inherit; }
+ .section__num { color: var(--accent); font-family: var(--mono); font-size: 12px; }
+ .section__title { margin: 0; font-size: clamp(30px, 4vw, 46px); font-weight: 400; letter-spacing: -.055em; line-height: 1.1; }
+ .cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+-.card { position: relative; display: flex; min-height: 220px; flex-direction: column; gap: 14px; overflow: hidden; padding: 28px; border: 1px solid var(--line); border-radius: var(--radius); background: linear-gradient(145deg, rgba(255, 255, 255, .025), transparent 62%), var(--surface); transition: border-color .25s, background .25s, transform .25s; }
++.card { position: relative; display: flex; min-height: 220px; flex-direction: column; gap: 14px; overflow: hidden; padding: 28px; border: 1px solid var(--line); border-radius: var(--radius); background: linear-gradient(145deg, var(--card-sheen), transparent 62%), var(--surface); transition: border-color .25s, background .25s, transform .25s; }
+ .card::after { position: absolute; right: -46px; bottom: -72px; width: 160px; height: 160px; border: 1px solid rgba(120, 152, 255, .1); border-radius: 50%; box-shadow: 0 0 0 20px rgba(120, 152, 255, .025), 0 0 0 42px rgba(120, 152, 255, .02); content: ""; transition: transform .45s; }
+ .card:hover { transform: translateY(-4px); border-color: rgba(120, 152, 255, .55); background-color: var(--surface-2); }
+ .card:hover::after { transform: scale(1.18); }
+@@ -208,3 +231,19 @@ mark { border-radius: 3px; background: rgba(120, 152, 255, .24); color: inherit;
+   .section { padding: 58px 0 72px; }
+   .list { grid-template-columns: 1fr; }
+ }
++
++/* ---------- Кнопка смены темы ---------- */
++.theme-toggle { display: inline-grid; flex: none; width: 38px; height: 38px; padding: 0; place-items: center; border: 1px solid var(--line-2); border-radius: 50%; background: transparent; color: var(--muted); cursor: pointer; transition: color .2s, border-color .2s, background .2s; }
++.theme-toggle:hover { border-color: var(--accent); background: var(--surface-2); color: var(--text); }
++.theme-toggle svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
++.theme-toggle .icon-moon { display: none; }
++:root[data-theme='light'] .theme-toggle .icon-sun { display: none; }
++:root[data-theme='light'] .theme-toggle .icon-moon { display: block; }
++.theme-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
++
++/* короткая плавная смена цветов при нажатии на кнопку */
++html.theme-anim, html.theme-anim *, html.theme-anim *::before, html.theme-anim *::after { transition: background-color .3s, color .3s, border-color .3s, fill .3s, stroke .3s, box-shadow .3s !important; }
++@media (prefers-reduced-motion: reduce) { html.theme-anim, html.theme-anim *, html.theme-anim *::before, html.theme-anim *::after { transition: none !important; } }
++@media (max-width: 620px) { .header__right { gap: 10px; } .theme-toggle { width: 36px; height: 36px; } }
++@media (max-width: 400px) { .logo__sub { display: none; } }
++@media print { .theme-toggle { display: none; } }
+diff --git a/assets/theme.js b/assets/theme.js
+new file mode 100644
+index 0000000..e770564
+--- /dev/null
++++ b/assets/theme.js
+@@ -0,0 +1,139 @@
++/*!
++ * Переключатель светлой/тёмной темы для экосистемы nmchv.ru
++ * (nmchv.ru · wiki.nmchv.ru · geotrainer.nmchv.ru).
++ *
++ * Один и тот же файл лежит во всех трёх проектах. Подключается в <head>
++ * синхронным <script src="…/theme.js"></script> — так тема выставляется
++ * до первой отрисовки и страница не «мигает».
++ *
++ * Выбор посетителя хранится в cookie на домене .nmchv.ru (общий для всех
++ * поддоменов) и дублируется в localStorage. Пока выбора нет — тема
++ * берётся из настроек системы (prefers-color-scheme).
++ *
++ * Кнопка — любой элемент с атрибутом data-theme-toggle. Обработчик
++ * делегированный, поэтому работает и для кнопок, которые рисует JavaScript.
++ */
++(function () {
++  'use strict';
++
++  var KEY = 'nmchv-theme';
++  var DEFAULT = 'system';                // 'system' | 'dark' | 'light'
++  var COLORS = { dark: '#08090b', light: '#f5f7fa' }; // для <meta name="theme-color">
++  var LABELS = {
++    ru: ['Включить светлую тему', 'Включить тёмную тему'],
++    en: ['Switch to light theme', 'Switch to dark theme']
++  };
++
++  var root = document.documentElement;
++  var query = window.matchMedia ? window.matchMedia('(prefers-color-scheme: light)') : null;
++
++  function readCookie() {
++    var m = document.cookie.match(new RegExp('(?:^|; )' + KEY + '=(light|dark)'));
++    return m ? m[1] : null;
++  }
++
++  function stored() {
++    var v = readCookie();
++    if (!v) {
++      try { v = localStorage.getItem(KEY); } catch (e) { v = null; }
++    }
++    return v === 'light' || v === 'dark' ? v : null;
++  }
++
++  function save(v) {
++    var host = location.hostname;
++    var shared = /(^|\.)nmchv\.ru$/.test(host) ? '; Domain=.nmchv.ru' : '';
++    var secure = location.protocol === 'https:' ? '; Secure' : '';
++    try {
++      document.cookie = KEY + '=' + v + shared + '; Path=/; Max-Age=31536000; SameSite=Lax' + secure;
++    } catch (e) { /* cookie недоступна — останется localStorage */ }
++    try { localStorage.setItem(KEY, v); } catch (e) { /* приватный режим */ }
++  }
++
++  function systemTheme() {
++    return query && query.matches ? 'light' : 'dark';
++  }
++
++  function resolve() {
++    return stored() || (DEFAULT === 'light' || DEFAULT === 'dark' ? DEFAULT : systemTheme());
++  }
++
++  function labelFor(btn, theme) {
++    var toLight = theme === 'dark';
++    var custom = toLight ? btn.getAttribute('data-label-light') : btn.getAttribute('data-label-dark');
++    if (custom) return custom;
++    var lang = (root.getAttribute('lang') || 'ru').slice(0, 2).toLowerCase();
++    var pair = LABELS[lang] || LABELS.en;
++    return toLight ? pair[0] : pair[1];
++  }
++
++  function syncButtons(theme) {
++    var buttons = document.querySelectorAll('[data-theme-toggle]');
++    for (var i = 0; i < buttons.length; i++) {
++      var label = labelFor(buttons[i], theme);
++      buttons[i].setAttribute('aria-label', label);
++      buttons[i].setAttribute('title', label);
++    }
++  }
++
++  function apply(theme) {
++    root.setAttribute('data-theme', theme);
++    var meta = document.querySelector('meta[name="theme-color"]');
++    if (meta) meta.setAttribute('content', COLORS[theme]);
++    syncButtons(theme);
++    try {
++      window.dispatchEvent(new CustomEvent('nmchv:themechange', { detail: { theme: theme } }));
++    } catch (e) { /* старые браузеры */ }
++  }
++
++  var animTimer;
++  function set(theme, animate) {
++    if (theme !== 'light' && theme !== 'dark') return;
++    if (animate) {
++      root.classList.add('theme-anim');
++      clearTimeout(animTimer);
++      animTimer = setTimeout(function () { root.classList.remove('theme-anim'); }, 400);
++    }
++    save(theme);
++    apply(theme);
++  }
++
++  function toggle() {
++    set(root.getAttribute('data-theme') === 'light' ? 'dark' : 'light', true);
++  }
++
++  // 1. Тема выставляется сразу, до отрисовки страницы.
++  apply(resolve());
++
++  // 2. Кнопки подписываем, когда документ готов; клики ловим делегированием.
++  document.addEventListener('DOMContentLoaded', function () { syncButtons(root.getAttribute('data-theme')); });
++  document.addEventListener('click', function (e) {
++    var el = e.target;
++    var btn = el && el.closest ? el.closest('[data-theme-toggle]') : null;
++    if (btn) { e.preventDefault(); toggle(); }
++  });
++
++  // 3. Пока посетитель сам ничего не выбрал — следуем за системной темой.
++  if (query) {
++    var onSystem = function () { if (!stored() && DEFAULT === 'system') apply(systemTheme()); };
++    if (query.addEventListener) query.addEventListener('change', onSystem);
++    else if (query.addListener) query.addListener(onSystem);
++  }
++
++  // 4. Синхронизация между вкладками и при возврате на вкладку (cookie общая для поддоменов).
++  window.addEventListener('storage', function (e) {
++    if (e.key === KEY && (e.newValue === 'light' || e.newValue === 'dark')) apply(e.newValue);
++  });
++  document.addEventListener('visibilitychange', function () {
++    if (document.visibilityState !== 'visible') return;
++    var v = stored();
++    if (v && v !== root.getAttribute('data-theme')) apply(v);
++  });
++
++  window.NmchvTheme = {
++    get: function () { return root.getAttribute('data-theme'); },
++    set: function (t) { set(t, true); },
++    toggle: toggle,
++    refresh: function () { syncButtons(root.getAttribute('data-theme')); } // перечитать подписи кнопок (после смены языка)
++  };
++})();
+diff --git a/index.html b/index.html
+index 84927de..b7d0e4d 100644
+--- a/index.html
++++ b/index.html
+@@ -6,6 +6,8 @@
+   <title>Учебная вики — Алексей Немичев</title>
+   <meta name="description" content="Учебные материалы Алексея Немичева: конспекты, термины, презентации и практические работы по географии.">
+   <meta name="theme-color" content="#08090B">
++  <meta name="color-scheme" content="dark light">
++  <script src="assets/theme.js"></script>
+   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2308090B'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%237CE0C3' stroke-width='2'/%3E%3Cpath d='M7 16h18M16 7c4 4 4 14 0 18M16 7c-4 4-4 14 0 18' fill='none' stroke='%237CE0C3' stroke-width='1.5'/%3E%3C/svg%3E">
+   <link rel="preconnect" href="https://fonts.googleapis.com">
+   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+@@ -27,6 +29,10 @@
+       <div class="header__right">
+         <a class="ghost" href="https://nmchv.ru" rel="noopener">nmchv.ru&nbsp;↗</a>
+         <a class="btn btn--admin" href="#/admin" data-r="admin">Админ</a>
++        <button class="theme-toggle" type="button" data-theme-toggle aria-label="Включить светлую тему" title="Включить светлую тему">
++          <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6"/></svg>
++          <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5a8.5 8.5 0 1 0 10.7 10.7Z"/></svg>
++        </button>
+         <button class="burger" id="burger" aria-label="Меню" aria-expanded="false"><span></span><span></span></button>
+       </div>
+     </div>
