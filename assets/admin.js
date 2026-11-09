@@ -141,7 +141,8 @@
   ['notes', 'Конспекты'],
   ['slides', 'Презентации'],
   ['works', 'Практические работы'],
-  ['terms', 'Термины'],
+    ['plan', 'Планирование'],
+    ['terms', 'Термины'],
   ['settings', 'Настройки']
 ];
     root.innerHTML =
@@ -222,6 +223,9 @@
       ? 'Тема: Литосфера'
       : 'Тема: Климат России') +
   '"></div>' +
+      ((!isNotes)
+        ? '<div class="field"><label>Номер по федеральному перечню (необязательно)</label><input class="input" id="m-number" value="' + esc(ed.number || '') + '" placeholder="Например: 2.3.1"></div>'
+        : '') +
       '<div class="field"><label>Класс</label><select class="input" id="m-grade">' + gradeOptions(ed.grade || 5) + '</select></div>' +
       '<div class="field"><label>Описание (необязательно)</label><textarea class="input" id="m-desc" style="min-height:80px">' + esc(ed.description || '') + '</textarea></div>' +
       ((isNotes || isWorks)
@@ -241,7 +245,7 @@
       (ed.id ? '<button class="btn" type="button" id="m-cancel">Отмена</button>' : '') + '</div></form></div>' +
       '<div><div class="admin-list" id="al">' + (items.length ? items.map(function (i) {
         return '<div class="arow"><div class="arow__t"><b>' + esc(i.title) + '</b><span>' + i.grade + ' класс' +
-          (i.pptx ? ' · PPTX' : '') + (i.pdf ? ' · PDF' : '') + '</span></div><div class="arow__a">' +
+          (i.number ? ' · № ' + esc(i.number) : '') + (i.pptx ? ' · PPTX' : '') + (i.pdf ? ' · PDF' : '') + '</span></div><div class="arow__a">' +
           '<button class="btn btn--sm" data-e="' + i.id + '">Изменить</button><button class="btn btn--sm btn--danger" data-d="' + i.id + '">Удалить</button></div></div>';
       }).join('') : '<div class="empty">Пока пусто. Добавьте первый материал слева.</div>') + '</div></div></div>';
 
@@ -277,6 +281,7 @@
 
       var id = ed.id || uid();
       var rec = { id: id, title: title, grade: grade, description: desc, pdf: ed.pdf || '', pptx: ed.pptx || '' };
+      if (!isNotes) rec.number = document.getElementById('m-number').value.trim();
       var dir = 'files/' + kind + '/' + grade + '/';
       var base = id + '-' + slug(title);
       var oldPaths = [];
@@ -311,6 +316,80 @@
     refreshFresh(kind, function () { materials(kind); }, items);
   }
 
+  function plan() {
+    var body = document.getElementById('body');
+    var items = cached('plan').slice().sort(function (a, b) {
+      return Number(a.grade) - Number(b.grade) ||
+        String(a.lessonNo || '').localeCompare(String(b.lessonNo || ''), 'ru', { numeric: true });
+    });
+    var ed = view.editing ? items.filter(function (item) { return item.id === view.editing; })[0] : null;
+    ed = ed || {};
+
+    function options(kind, selectedId) {
+      var resources = cached(kind).slice().sort(function (a, b) {
+        return Number(a.grade) - Number(b.grade) ||
+          String(a.number || '').localeCompare(String(b.number || ''), 'ru', { numeric: true }) ||
+          String(a.title || '').localeCompare(String(b.title || ''), 'ru');
+      });
+      return '<option value="">Не прикреплять</option>' + resources.map(function (item) {
+        var title = item.grade + ' класс · ' + (item.number ? '№ ' + item.number + ' · ' : '') + item.title;
+        return '<option value="' + esc(item.id) + '"' + (item.id === selectedId ? ' selected' : '') + '>' + esc(title) + '</option>';
+      }).join('');
+    }
+
+    body.innerHTML =
+      '<div class="admin-grid"><div class="panel"><h2>' + (ed.id ? 'Изменить тему' : 'Новая тема планирования') + '</h2>' +
+      '<p class="hint">Добавьте тему федерального планирования и при необходимости прикрепите к ней презентацию и практическую работу.</p>' +
+      '<form id="pf">' +
+      '<div class="field"><label for="p-title">Тема урока</label><input class="input" id="p-title" required value="' + esc(ed.title || '') + '" placeholder="Например: Реки России"></div>' +
+      '<div class="field"><label for="p-grade">Класс</label><select class="input" id="p-grade">' + gradeOptions(ed.grade || 5) + '</select></div>' +
+      '<div class="field"><label for="p-lesson">Номер урока</label><input class="input" id="p-lesson" value="' + esc(ed.lessonNo || '') + '" placeholder="Например: 12"></div>' +
+      '<div class="field"><label for="p-number">Номер темы по федеральному перечню</label><input class="input" id="p-number" value="' + esc(ed.number || '') + '" placeholder="Например: 2.3.1"></div>' +
+      '<div class="field"><label for="p-slide">Презентация</label><select class="input" id="p-slide">' + options('slides', ed.slideId) + '</select></div>' +
+      '<div class="field"><label for="p-work">Практическая работа</label><select class="input" id="p-work">' + options('works', ed.workId) + '</select></div>' +
+      '<div class="actions"><button class="btn btn--primary" type="submit">' + (ed.id ? 'Сохранить' : 'Добавить тему') + '</button>' +
+      (ed.id ? '<button class="btn" type="button" id="p-cancel">Отмена</button>' : '') + '</div></form></div>' +
+      '<div><div class="admin-list" id="pl">' + (items.length ? items.map(function (item) {
+        return '<div class="arow"><div class="arow__t"><b>' + esc(item.title) + '</b><span>' + esc(item.grade) + ' класс · урок ' + esc(item.lessonNo || '—') + ' · № ' + esc(item.number || '—') + '</span></div><div class="arow__a">' +
+          '<button class="btn btn--sm" data-e="' + esc(item.id) + '">Изменить</button><button class="btn btn--sm btn--danger" data-d="' + esc(item.id) + '">Удалить</button></div></div>';
+      }).join('') : '<div class="empty">Тем пока нет. Добавьте первую тему или подключите материалы через форму слева.</div>') + '</div></div></div>';
+
+    var cancel = document.getElementById('p-cancel');
+    if (cancel) cancel.addEventListener('click', function () { view.editing = null; plan(); });
+    document.getElementById('pl').addEventListener('click', function (e) {
+      var edit = e.target.closest('[data-e]'), del = e.target.closest('[data-d]');
+      if (edit) { view.editing = edit.dataset.e; plan(); window.scrollTo(0, 0); }
+      if (del) removeItem('plan', del.dataset.d, del);
+    });
+    document.getElementById('pf').addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (!isReady()) { W.toast('Сначала подключите GitHub во вкладке «Настройки»', true); return; }
+      var btn = e.target.querySelector('[type=submit]');
+      var rec = {
+        id: ed.id || uid(),
+        grade: Number(document.getElementById('p-grade').value),
+        lessonNo: document.getElementById('p-lesson').value.trim(),
+        number: document.getElementById('p-number').value.trim(),
+        title: document.getElementById('p-title').value.trim(),
+        slideId: document.getElementById('p-slide').value,
+        workId: document.getElementById('p-work').value
+      };
+      busy(btn, true);
+      mutate('plan', function (list) {
+        var index = -1;
+        list.forEach(function (item, i) { if (item.id === rec.id) index = i; });
+        if (index > -1) list[index] = rec; else list.push(rec);
+        return list;
+      }, (ed.id ? 'Изменение темы: ' : 'Добавление темы: ') + rec.title).then(function (list) {
+        view.cache = view.cache || {}; view.cache.plan = list; W.DATA.plan = list;
+        view.editing = null;
+        W.toast(ed.id ? 'Изменения сохранены' : 'Тема добавлена');
+        plan();
+      }).catch(function (err) { busy(btn, false); W.toast(err.message, true); });
+    });
+    refreshFresh('plan', plan, items);
+  }
+
   function removeItem(kind, id, btn) {
     if (!isReady()) { W.toast('Сначала подключите GitHub во вкладке «Настройки»', true); return; }
     var it = cached(kind).filter(function (i) { return i.id === id; })[0]; if (!it) return;
@@ -322,7 +401,9 @@
         [it.pdf, it.pptx].filter(Boolean).forEach(function (p) { delFile(p, 'Удаление файла'); });
         W.toast('Удалено');
         if (view.editing === id) view.editing = null;
-        view.tab === 'terms' ? terms() : materials(kind);
+        if (view.tab === 'terms') terms();
+        else if (view.tab === 'plan') plan();
+        else materials(kind);
       }).catch(function (err) { busy(btn, false); W.toast(err.message, true); });
   }
 
@@ -415,6 +496,7 @@
     root.querySelectorAll('.tabs .chip').forEach(function (c) { c.classList.toggle('is-on', c.dataset.t === view.tab); });
     if (view.tab === 'settings') settings();
     else if (view.tab === 'terms') terms();
+    else if (view.tab === 'plan') plan();
     else materials(view.tab);
   }
 

@@ -7,7 +7,8 @@
   notes: [],
   slides: [],
   terms: [],
-  works: []
+  works: [],
+  plan: []
 };
   var app = document.getElementById('app');
 
@@ -61,12 +62,14 @@
     loadOne('notes'),
     loadOne('slides'),
     loadOne('terms'),
-    loadOne('works')
+    loadOne('works'),
+    loadOne('plan')
   ]).then(function (r) {
     DATA.notes = r[0];
     DATA.slides = r[1];
     DATA.terms = r[2];
     DATA.works = r[3];
+    DATA.plan = r[4];
   });
 }
 
@@ -80,59 +83,90 @@
     };
     app.innerHTML =
       '<section class="hero"><div class="wrap">' +
-        '<div class="eyebrow">Учебная вики</div>' +
-        '<h1>География<br>для <em>урока</em></h1>' +
-        '<p class="hero__lead">Конспекты уроков, словарь терминов с примерами, презентации и практические работы — всё, что нужно ученику, в одном месте.</p>' +
+        '<div class="hero__content"><div class="eyebrow">Учебная вики · 5–11 классы</div>' +
+        '<h1>География<br><em>открывает мир</em></h1>' +
+        '<p class="hero__lead">Материалы к урокам, понятные объяснения и практические задания — собраны в одном месте.</p>' +
+        '<a class="btn btn--primary hero__link" href="#/notes">Перейти к материалам <span aria-hidden="true">→</span></a></div>' +
+        '<div class="hero__visual" aria-hidden="true"><div class="hero__globe"><span class="hero__globe-line"></span><span class="hero__globe-dot"></span></div><span class="hero__coordinate">55°45′N · 37°37′E</span></div>' +
         '<div class="hero__meta"><span><b>' + cnt.notes + '</b> конспектов</span><span><b>' + cnt.terms + '</b> терминов</span><span><b>' + cnt.slides + '</b> презентаций</span><span><b>' + cnt.works + '</b> практических работ</span></div>' +
       '</div></section>' +
       '<section class="section"><div class="wrap">' +
-        '<div class="section__head"><span class="section__num">01</span><h2 class="section__title">Разделы</h2></div>' +
+        '<div class="section__head"><span class="section__num">01</span><h2 class="section__title">Выберите раздел</h2></div>' +
         '<div class="cards">' +
-          card(
-  '01',
-  'Конспекты',
-  'Записи с уроков по классам. Скачать можно в PDF.',
-  cnt.notes,
-  'материал',
-  'материала',
-  'материалов',
-  '#/notes'
-) +
-card(
-  '02',
-  'Термины',
-  'Библиотека определений с примерами. Найдите нужный термин через поиск.',
-  cnt.terms,
-  'термин',
-  'термина',
-  'терминов',
-  '#/terms'
-) +
-card(
-  '03',
-  'Презентации',
-  'Слайды с уроков по классам. Скачать можно в PPTX и PDF.',
-  cnt.slides,
-  'презентация',
-  'презентации',
-  'презентаций',
-  '#/slides'
-) +
-card(
-  '04',
-  'Практические работы',
-  'Практические задания по географии. Скачать можно в PDF.',
-  cnt.works,
-  'работа',
-  'работы',
-  'работ',
-  '#/works'
-) +
-        '</div></div></section>';
+          card('01', 'Конспекты', 'Краткие записи с уроков, сгруппированные по классам.', cnt.notes, 'материал', 'материала', 'материалов', '#/notes', 'PDF · ЧИТАТЬ') +
+          card('02', 'Термины', 'Словарь географии с определениями и примерами.', cnt.terms, 'термин', 'термина', 'терминов', '#/terms', 'ПОИСК · УЗНАВАТЬ') +
+          card('03', 'Презентации', 'Наглядные материалы к темам уроков.', cnt.slides, 'презентация', 'презентации', 'презентаций', '#/slides', 'СЛАЙДЫ · СМОТРЕТЬ') +
+          card('04', 'Практические работы', 'Задания с поиском по классу и номеру перечня.', cnt.works, 'работа', 'работы', 'работ', '#/works', 'ЗАДАНИЯ · РЕШАТЬ') +
+        '</div>' +
+        '<details class="planner" id="planner"><summary><span><span class="eyebrow">Для подготовки к уроку</span><strong>Поурочное планирование</strong><small>Темы и материалы по классам</small></span><span class="planner__toggle" aria-hidden="true">+</span></summary>' +
+          '<div class="planner__body"><div class="planner__toolbar"><p>Федеральный номер поможет быстро найти тему, презентацию или практическую работу.</p><label class="planner__grade">Класс <select class="input" id="plan-grade"><option value="all">Все классы</option>' +
+            CLASSES.map(function (g) { return '<option value="' + g + '">' + g + ' класс</option>'; }).join('') +
+          '</select></label></div><div id="plan-out"></div></div>' +
+        '</details>' +
+      '</div></section>';
+    drawPlanner();
+    reveal(app.querySelectorAll('.card'));
+    document.getElementById('plan-grade').addEventListener('change', drawPlanner);
   }
-  function card(n, t, d, count, a, b, c, href) {
-    return '<a class="card" href="' + href + '"><span class="card__num">' + n + '</span><h3>' + t + '</h3><p>' + d + '</p>' +
-      '<div class="card__foot"><span>' + count + ' ' + plural(count, a, b, c) + '</span><span>Открыть →</span></div></a>';
+  function card(n, t, d, count, a, b, c, href, hint) {
+    return '<a class="card" href="' + href + '"><span class="card__num">' + n + '</span><span class="card__hint">' + hint + '</span><span class="card__orbit" aria-hidden="true"></span><h3>' + t + '</h3><p>' + d + '</p>' +
+      '<div class="card__foot"><span>' + count + ' ' + plural(count, a, b, c) + '</span><span>Открыть <b aria-hidden="true">↗</b></span></div></a>';
+  }
+
+  function drawPlanner() {
+    var out = document.getElementById('plan-out');
+    if (!out) return;
+    var selectedGrade = document.getElementById('plan-grade').value;
+    var rows = DATA.plan.slice().filter(function (row) {
+      return selectedGrade === 'all' || Number(row.grade) === Number(selectedGrade);
+    }).sort(function (a, b) {
+      return Number(a.grade) - Number(b.grade) ||
+        String(a.lessonNo || '').localeCompare(String(b.lessonNo || ''), 'ru', { numeric: true }) ||
+        String(a.number || '').localeCompare(String(b.number || ''), 'ru', { numeric: true });
+    });
+    if (!rows.length) {
+      out.innerHTML = '<div class="empty">Планирование пока не заполнено. Добавьте темы и прикрепите материалы в <a href="#/admin">админ-панели</a>.</div>';
+      return;
+    }
+    function materialLinks(kind, id) {
+      var item = DATA[kind].filter(function (entry) { return entry.id === id; })[0];
+      if (!item) return '';
+      var links = [];
+      var label = kind === 'works' ? 'Практическая' : 'Презентация';
+      if (kind === 'slides' && item.pptx) {
+        links.push('<a class="planner__link" href="' + esc(encodeURI(item.pptx)) + '" download>' + label + ' PPTX ↗</a>');
+      }
+      if (item.pdf) {
+        links.push('<button class="planner__link" type="button" data-pdf="' + esc(item.pdf) + '" data-pdf-title="' + esc(item.title) + '">' + label + ' PDF ↗</button>');
+      }
+      return links.join('');
+    }
+    out.innerHTML = '<div class="planner__table-wrap"><table class="planner__table"><thead><tr><th>Класс</th><th>Урок</th><th>№ темы</th><th>Тема</th><th>Материалы</th></tr></thead><tbody>' +
+      rows.map(function (row) {
+        var resources = materialLinks('slides', row.slideId) + materialLinks('works', row.workId);
+        return '<tr><td><span class="tag">' + esc(row.grade) + ' класс</span></td><td>' + esc(row.lessonNo || '—') + '</td><td><span class="planner__number">' + esc(row.number || '—') + '</span></td><td><strong>' + esc(row.title) + '</strong></td><td>' + (resources ? '<div class="planner__resources">' + resources + '</div>' : '<span class="planner__empty">Не прикреплено</span>') + '</td></tr>';
+      }).join('') +
+      '</tbody></table></div>';
+  }
+
+  function reveal(nodes) {
+    if (!window.IntersectionObserver) {
+      Array.prototype.forEach.call(nodes, function (node) { node.classList.add('is-visible'); });
+      return;
+    }
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.08, rootMargin: '0px 0px -24px 0px' });
+    Array.prototype.forEach.call(nodes, function (node, i) {
+      node.classList.add('reveal');
+      node.style.setProperty('--reveal-delay', Math.min(i % 6, 5) * 55 + 'ms');
+      observer.observe(node);
+    });
   }
 
   /* общий каталог материалов */
@@ -158,7 +192,7 @@ card(
               : 'Презентации с уроков. Выберите класс, найдите нужное задание и скачайте PPTX или PDF.') +
         '</p></div>' +
         '<div class="toolbar"><div id="chips" class="chips"></div>' +
-        '<div class="search"><input id="search" type="search" placeholder="Поиск по материалам…" aria-label="Поиск по материалам"></div></div>' +
+        '<div class="search"><input id="search" type="search" placeholder="' + (isWorks || kind === 'slides' ? 'Поиск по номеру или теме…' : 'Поиск по материалам…') + '" aria-label="Поиск по материалам"></div></div>' +
         '<div id="out" class="materials-grid"></div>' +
       '</div></section>';
 
@@ -183,7 +217,7 @@ card(
       var q = norm(state.q).trim();
       var list = items.filter(function (i) {
         if (state.grade !== 'all' && Number(i.grade) !== state.grade) return false;
-        return !q || norm(i.title + ' ' + (i.description || '')).indexOf(q) > -1;
+        return !q || norm(i.title + ' ' + (i.description || '') + ' ' + (i.number || '')).indexOf(q) > -1;
       });
       if (!list.length) {
         out.innerHTML = '<div class="empty">' + (items.length ? 'Ничего не найдено. Попробуйте другой класс или запрос.' : 'Материалов пока нет — скоро появятся.') + '</div>';
@@ -194,7 +228,13 @@ card(
         var part = list.filter(function (i) { return Number(i.grade) === g; });
         if (!part.length) return;
         html += '<div class="group"><h2 class="group__title">' + g + ' класс <span>' + part.length + '</span></h2><div class="list">';
-        part.forEach(function (i) {
+        part.sort(function (a, b) {
+          var an = String(a.number || ''), bn = String(b.number || '');
+          if (an && bn) return an.localeCompare(bn, 'ru', { numeric: true });
+          if (an) return -1;
+          if (bn) return 1;
+          return String(b.id || '').localeCompare(String(a.id || ''));
+        }).forEach(function (i, index) {
           var base = String(i.title).replace(/[\\/:*?"<>|]+/g, '').trim();
           var acts = '';
 
@@ -211,7 +251,7 @@ if (isNotes || isWorks) {
     acts += pdfPreview(i.pdf, i.title) + dl(i.pdf, 'Скачать PDF', base + '.pdf');
   }
 }
-          html += '<article class="item">' + (i.topic ? '<div class="item__meta"><span class="tag">' + esc(i.topic) + '</span></div>' : '') +
+          html += '<article class="item"><div class="item__meta">' + (i.number ? '<span class="tag item__number">№ ' + highlight(i.number, state.q) + '</span>' : '') + (i.topic ? '<span class="tag">' + esc(i.topic) + '</span>' : '') + '<span class="item__ordinal">' + String(index + 1).padStart(2, '0') + '</span></div>' +
             '<h3>' + highlight(i.title, state.q) + '</h3>' +
             (i.description ? '<p>' + esc(i.description) + '</p>' : '') +
             '<div class="item__act">' + (acts || '<span class="tag">файл не прикреплён</span>') + '</div></article>';
@@ -219,6 +259,7 @@ if (isNotes || isWorks) {
         html += '</div></div>';
       });
       out.innerHTML = html;
+      reveal(out.querySelectorAll('.item'));
     }
 
     chips.addEventListener('click', function (e) {
@@ -279,6 +320,7 @@ if (isNotes || isWorks) {
             (ex.length > 1 ? '<ul>' + ex.map(function (e) { return '<li>' + highlight(e, state.q) + '</li>'; }).join('') + '</ul>' : highlight(ex[0], state.q)) + '</div>' : '') +
           '</div></article>';
       }).join('') + '</div>';
+      reveal(out.querySelectorAll('.term'));
     }
 
     var timer;
