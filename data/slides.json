@@ -126,7 +126,9 @@
       "grade": 10,
       "description": "",
       "pdf": "",
-      "pptx": "files/slides/10/mw9h6c2dtjz-landshafty.pptx"
+      "pptx": "files/slides/10/mw9h6c2dtjz-landshafty.pptx",
+      "number": "",
+      "icon": "physical"
     },
     {
       "id": "mw9h77osq0h",
