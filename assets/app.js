@@ -304,7 +304,7 @@
       }
       if (item.pdf) {
         actions.push('<div class="item__act-pdf"><a class="file-action file-action--download" href="' + esc(encodeURI(item.pdf)) + '" download="' + esc(base + '.pdf') + '" aria-label="Скачать PDF" title="Скачать PDF">' + fileIcon('M12 3v12m0 0 5-5m-5 5-5-5M5 19h14') + '<span>PDF</span></a>' +
-          '<button class="file-action file-action--preview" type="button" data-pdf="' + esc(item.pdf) + '" data-pdf-title="' + esc(item.title) + '" aria-label="Просмотреть PDF" title="Просмотреть PDF">' + fileIcon('M3 12s3.2-6 9-6 9 6 9 6-3.2 6-9 6-9-6-9-6Zm9-3a3 3 0 1 0 0 6 3 3 0 0 0 0 6Z') + '<span>PDF</span></button></div>');
+          '<button class="file-action file-action--preview" type="button" data-pdf="' + esc(item.pdf) + '" data-pdf-title="' + esc(item.title) + '" aria-label="Просмотреть PDF" title="Просмотреть PDF">' + fileIcon('M3 12s3.2-6 9-6 9 6 9 6-3.2 6-9 6-9-6-9-6Zm9-3a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z') + '<span>PDF</span></button></div>');
       }
       return actions.length ? '<div class="item__act">' + (item.pptx ? '<div class="item__act-primary">' + actions[0] + '</div>' : '') + (item.pdf ? actions[actions.length - 1] : '') + '</div>' : '<div class="item__act"><span class="item__no-file">Файл не прикреплён</span></div>';
     }
