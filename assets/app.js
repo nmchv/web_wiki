@@ -19,12 +19,21 @@
     var type = MATERIAL_TYPES[name] || MATERIAL_TYPES.general;
     return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="' + type.path + '"/></svg>';
   }
+  var PLAN_COLUMNS_DEFAULT = [
+    { id: 'grade', label: 'Класс' },
+    { id: 'lessonNo', label: 'Урок' },
+    { id: 'number', label: '№ темы' },
+    { id: 'title', label: 'Тема' },
+    { id: 'slideId', label: 'Презентация' },
+    { id: 'workId', label: 'Практическая работа' }
+  ];
   var DATA = {
   notes: [],
   slides: [],
   terms: [],
   works: [],
-  plan: []
+  plan: [],
+  planColumns: PLAN_COLUMNS_DEFAULT
 };
   var app = document.getElementById('app');
 
@@ -79,13 +88,16 @@
     loadOne('slides'),
     loadOne('terms'),
     loadOne('works'),
-    loadOne('plan')
+    fetch('data/plan.json?t=' + Date.now(), { cache: 'no-store' }).then(function (r) {
+      return r.ok ? r.json() : { items: [] };
+    }).then(function (j) { return j || { items: [] }; }).catch(function () { return { items: [] }; })
   ]).then(function (r) {
     DATA.notes = r[0];
     DATA.slides = r[1];
     DATA.terms = r[2];
     DATA.works = r[3];
-    DATA.plan = r[4];
+    DATA.plan = r[4].items || [];
+    DATA.planColumns = Array.isArray(r[4].columns) ? r[4].columns : PLAN_COLUMNS_DEFAULT;
   });
 }
 
@@ -115,9 +127,9 @@
           card('04', 'Практические работы', 'Задания с поиском по классу и номеру перечня.', cnt.works, 'работа', 'работы', 'работ', '#/works') +
         '</div>' +
         '<details class="planner" id="planner"><summary><span><span class="eyebrow">Для подготовки к уроку</span><strong>Поурочное планирование</strong><small>Темы и материалы по классам</small></span><span class="planner__toggle" aria-hidden="true">+</span></summary>' +
-          '<div class="planner__body"><div class="planner__toolbar"><p>Федеральный номер поможет быстро найти тему, презентацию или практическую работу.</p><label class="planner__grade">Класс <select class="input" id="plan-grade"><option value="all">Все классы</option>' +
+          '<div class="planner__body"><div class="planner__toolbar"><p>Федеральный номер поможет быстро найти тему, презентацию или практическую работу.</p><div class="planner__tools"><label class="planner__grade">Класс <select class="input" id="plan-grade"><option value="all">Все классы</option>' +
             CLASSES.map(function (g) { return '<option value="' + g + '">' + g + ' класс</option>'; }).join('') +
-          '</select></label></div><div id="plan-out"></div></div>' +
+          '</select></label><button class="btn btn--sm" type="button" id="plan-print-toggle">Подготовить печать</button></div></div><div id="plan-out"></div></div>' +
         '</details>' +
       '</div></section>';
     drawPlanner();
@@ -144,6 +156,12 @@
       out.innerHTML = '<div class="empty">Планирование пока не заполнено. Добавьте темы и прикрепите материалы в <a href="#/admin">админ-панели</a>.</div>';
       return;
     }
+    var columns = Array.isArray(DATA.planColumns) ? DATA.planColumns : PLAN_COLUMNS_DEFAULT;
+    var printPanel = '<div class="planner__print" id="plan-print-settings" hidden><div class="planner__print-group"><strong>Столбцы</strong><div class="planner__checks">' +
+      columns.map(function (column) { return '<label><input type="checkbox" data-plan-print-column="' + esc(column.id) + '" checked> ' + esc(column.label) + '</label>'; }).join('') +
+      '</div></div><div class="planner__print-group"><strong>Темы</strong><div class="planner__checks planner__checks--rows">' +
+      rows.map(function (row, index) { return '<label><input type="checkbox" data-plan-print-row="' + esc(row.id || String(index)) + '" checked> ' + esc(row.grade + ' класс · ' + (row.lessonNo ? 'урок ' + row.lessonNo + ' · ' : '') + row.title) + '</label>'; }).join('') +
+      '</div></div><button class="btn btn--primary btn--sm" type="button" id="plan-print-run">Открыть печать / сохранить в PDF</button></div>';
     function materialLinks(kind, id) {
       var item = DATA[kind].filter(function (entry) { return entry.id === id; })[0];
       if (!item) return '';
@@ -157,12 +175,65 @@
       }
       return links.join('');
     }
-    out.innerHTML = '<div class="planner__table-wrap"><table class="planner__table"><thead><tr><th>Класс</th><th>Урок</th><th>№ темы</th><th>Тема</th><th>Материалы</th></tr></thead><tbody>' +
+    out.innerHTML = printPanel + '<div class="planner__table-wrap"><table class="planner__table"><thead><tr>' +
+      columns.map(function (column) { return '<th>' + esc(column.label) + '</th>'; }).join('') +
+      '</tr></thead><tbody>' +
       rows.map(function (row) {
-        var resources = materialLinks('slides', row.slideId) + materialLinks('works', row.workId);
-        return '<tr><td><span class="tag">' + esc(row.grade) + ' класс</span></td><td>' + esc(row.lessonNo || '—') + '</td><td><span class="planner__number">' + esc(row.number || '—') + '</span></td><td><strong>' + esc(row.title) + '</strong></td><td>' + (resources ? '<div class="planner__resources">' + resources + '</div>' : '<span class="planner__empty">Не прикреплено</span>') + '</td></tr>';
+        return '<tr>' + columns.map(function (column) {
+          var value = row[column.id];
+          if (column.id === 'grade') value = value ? '<span class="tag">' + esc(value) + ' класс</span>' : '—';
+          else if (column.id === 'number') value = '<span class="planner__number">' + esc(value || '—') + '</span>';
+          else if (column.id === 'title') value = (row.practical ? '<span class="planner__practical">Практическая</span> ' : '') + '<strong>' + esc(value || '—') + '</strong>';
+          else if (column.id === 'slideId' || column.id === 'workId') {
+            var kind = column.id === 'slideId' ? 'slides' : 'works';
+            var links = materialLinks(kind, row[column.id]);
+            value = links ? '<div class="planner__resources">' + links + '</div>' : '<span class="planner__empty">Не прикреплено</span>';
+          } else value = esc(row.custom && row.custom[column.id] || '—');
+          return '<td>' + value + '</td>';
+        }).join('') + '</tr>';
       }).join('') +
       '</tbody></table></div>';
+    document.getElementById('plan-print-toggle').addEventListener('click', function () {
+      var panel = document.getElementById('plan-print-settings');
+      panel.hidden = !panel.hidden;
+    });
+    document.getElementById('plan-print-run').addEventListener('click', function () {
+      var selectedColumns = Array.prototype.slice.call(out.querySelectorAll('[data-plan-print-column]:checked'))
+        .map(function (input) { return input.dataset.planPrintColumn; });
+      var selectedRows = Array.prototype.slice.call(out.querySelectorAll('[data-plan-print-row]:checked'))
+        .map(function (input) { return input.dataset.planPrintRow; });
+      if (!selectedColumns.length || !selectedRows.length) {
+        toast('Выберите хотя бы один столбец и одну тему', true);
+        return;
+      }
+      var printable = rows.filter(function (row, index) { return selectedRows.indexOf(String(row.id || index)) > -1; });
+      function cell(row, column) {
+        var value = row[column.id];
+        if (column.id === 'grade') return esc(value ? value + ' класс' : '—');
+        if (column.id === 'title') return (row.practical ? 'Практическая. ' : '') + esc(value || '—');
+        if (column.id === 'slideId' || column.id === 'workId') {
+          var kind = column.id === 'slideId' ? 'slides' : 'works';
+          var item = DATA[kind].filter(function (entry) { return entry.id === row[column.id]; })[0];
+          return item ? esc(item.title) : '—';
+        }
+        return esc(row.custom && row.custom[column.id] || value || '—');
+      }
+      var popup = window.open('', '_blank');
+      if (!popup) { toast('Разрешите всплывающие окна для печати', true); return; }
+      var content = '<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>Поурочное планирование</title><style>' +
+        'body{font:12px Arial,sans-serif;color:#111;margin:18mm}h1{font-size:20px;margin:0 0 16px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #777;padding:6px 8px;text-align:left;vertical-align:top}th{background:#eee}@page{size:auto;margin:12mm}' +
+        '</style></head><body><h1>Поурочное планирование</h1><table><thead><tr>' +
+        selectedColumns.map(function (id) { return '<th>' + esc(columns.filter(function (column) { return column.id === id; })[0].label) + '</th>'; }).join('') +
+        '</tr></thead><tbody>' + printable.map(function (row) {
+          return '<tr>' + selectedColumns.map(function (id) {
+            return '<td>' + cell(row, columns.filter(function (column) { return column.id === id; })[0]) + '</td>';
+          }).join('') + '</tr>';
+        }).join('') + '</tbody></table></body></html>';
+      popup.document.open();
+      popup.document.write(content);
+      popup.document.close();
+      setTimeout(function () { popup.focus(); popup.print(); }, 250);
+    });
   }
 
   function reveal(nodes) {
@@ -229,13 +300,13 @@
       var actions = [];
       if (item.pptx) {
         var type = item.pptx.toLowerCase().split('?')[0].split('.').pop();
-        actions.push('<a class="file-action" href="' + esc(encodeURI(item.pptx)) + '" download="' + esc(base + '.' + type) + '" aria-label="Скачать ' + esc(type.toUpperCase()) + '" title="Скачать ' + esc(type.toUpperCase()) + '"><span>' + esc(type.toUpperCase()) + '</span>' + fileIcon('M12 3v12m0 0 5-5m-5 5-5-5M5 19h14') + '</a>');
+        actions.push('<a class="file-action" href="' + esc(encodeURI(item.pptx)) + '" download="' + esc(base + '.' + type) + '" aria-label="Скачать ' + esc(type.toUpperCase()) + '" title="Скачать ' + esc(type.toUpperCase()) + '">' + fileIcon('M12 3v12m0 0 5-5m-5 5-5-5M5 19h14') + '<span>' + esc(type.toUpperCase()) + '</span></a>');
       }
       if (item.pdf) {
-        actions.push('<button class="file-action file-action--preview" type="button" data-pdf="' + esc(item.pdf) + '" data-pdf-title="' + esc(item.title) + '" aria-label="Просмотреть PDF" title="Просмотреть PDF"><span>PDF</span>' + fileIcon('M3 12s3.2-6 9-6 9 6 9 6-3.2 6-9 6-9-6-9-6Zm9-3a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z') + '</button>');
-        actions.push('<a class="file-action file-action--download" href="' + esc(encodeURI(item.pdf)) + '" download="' + esc(base + '.pdf') + '" aria-label="Скачать PDF" title="Скачать PDF">' + fileIcon('M12 3v12m0 0 5-5m-5 5-5-5M5 19h14') + '</a>');
+        actions.push('<div class="item__act-pdf"><a class="file-action file-action--download" href="' + esc(encodeURI(item.pdf)) + '" download="' + esc(base + '.pdf') + '" aria-label="Скачать PDF" title="Скачать PDF">' + fileIcon('M12 3v12m0 0 5-5m-5 5-5-5M5 19h14') + '<span>PDF</span></a>' +
+          '<button class="file-action file-action--preview" type="button" data-pdf="' + esc(item.pdf) + '" data-pdf-title="' + esc(item.title) + '" aria-label="Просмотреть PDF" title="Просмотреть PDF">' + fileIcon('M3 12s3.2-6 9-6 9 6 9 6-3.2 6-9 6-9-6-9-6Zm9-3a3 3 0 1 0 0 6 3 3 0 0 0 0 6Z') + '<span>PDF</span></button></div>');
       }
-      return actions.length ? '<div class="item__act">' + actions.join('') + '</div>' : '<div class="item__act"><span class="item__no-file">Файл не прикреплён</span></div>';
+      return actions.length ? '<div class="item__act">' + (item.pptx ? '<div class="item__act-primary">' + actions[0] + '</div>' : '') + (item.pdf ? actions[actions.length - 1] : '') + '</div>' : '<div class="item__act"><span class="item__no-file">Файл не прикреплён</span></div>';
     }
     function draw() {
       var q = norm(state.q).trim();
@@ -261,10 +332,11 @@
         }).forEach(function (i, index) {
           var base = String(i.title).replace(/[\\/:*?"<>|]+/g, '').trim();
           var category = MATERIAL_TYPES[i.icon] || MATERIAL_TYPES.general;
+          var categoryMarkup = i.icon && i.icon !== 'general' ? '<span class="item__category">' + esc(category.label) + '</span>' : '';
           html += '<article class="item item--' + esc(kind) + '"><div class="item__symbol" aria-hidden="true">' + iconMarkup(i.icon) + '</div>' +
             '<div class="item__main"><div class="item__meta">' + (i.number ? '<span class="tag item__number">№ ' + highlight(i.number, state.q) + '</span>' : '') + (i.topic ? '<span class="tag">' + esc(i.topic) + '</span>' : '') + '<span class="item__ordinal">' + String(index + 1).padStart(2, '0') + '</span></div>' +
             '<h3>' + highlight(i.title, state.q) + '</h3>' + (i.description ? '<p>' + esc(i.description) + '</p>' : '') +
-            '<span class="item__category">' + esc(category.label) + '</span></div>' + fileActions(i, base) + '</article>';
+            categoryMarkup + '</div>' + fileActions(i, base) + '</article>';
         });
         html += '</div></div>';
       });
@@ -402,7 +474,7 @@
 
   /* экспорт для админки */
   window.Wiki = {
-    CLASSES: CLASSES, DATA: DATA, MATERIAL_TYPES: MATERIAL_TYPES, iconMarkup: iconMarkup,
+    CLASSES: CLASSES, DATA: DATA, PLAN_COLUMNS_DEFAULT: PLAN_COLUMNS_DEFAULT, MATERIAL_TYPES: MATERIAL_TYPES, iconMarkup: iconMarkup,
     esc: esc, toast: toast, norm: norm,
     reload: function () { return loadAll(); },
     refresh: route

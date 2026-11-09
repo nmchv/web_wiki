@@ -86,23 +86,25 @@
   }
   function readData(name) {
     return getFile('data/' + name + '.json').then(function (f) {
-      var items = [];
-      if (f && f.content) { try { items = JSON.parse(b64utf8(f.content)).items || []; } catch (e) {} }
-      return { items: items, sha: f && f.sha };
+      var items = [], columns = W.PLAN_COLUMNS_DEFAULT;
+      if (f && f.content) { try { var payload = JSON.parse(b64utf8(f.content)); items = payload.items || []; columns = Array.isArray(payload.columns) ? payload.columns : columns; } catch (e) {} }
+      return { items: items, columns: columns, sha: f && f.sha };
     });
   }
-  function mutate(name, fn, message, attempt) {
+  function mutate(name, fn, message, attempt, metadata) {
     attempt = attempt || 0;
     return readData(name).then(function (cur) {
       var items = fn(cur.items.slice());
       if (name === 'notes' || name === 'slides' || name === 'works') {
         items.forEach(function (item) { delete item.date; });
       }
-      var body = { message: message, content: utf8b64(JSON.stringify({ items: items }, null, 2) + '\n') };
+      var payload = { items: items };
+      if (metadata) Object.keys(metadata).forEach(function (key) { payload[key] = metadata[key]; });
+      var body = { message: message, content: utf8b64(JSON.stringify(payload, null, 2) + '\n') };
       if (cur.sha) body.sha = cur.sha;
       return api('PUT', 'data/' + name + '.json', body).then(function () { return items; });
     }).catch(function (e) {
-      if ((e.status === 409 || e.status === 422) && attempt < 2) return mutate(name, fn, message, attempt + 1);
+      if ((e.status === 409 || e.status === 422) && attempt < 2) return mutate(name, fn, message, attempt + 1, metadata);
       throw e;
     });
   }
@@ -326,50 +328,73 @@
 
   function plan() {
     var body = document.getElementById('body');
+    if (!view.planColumns) view.planColumns = (W.DATA.planColumns || W.PLAN_COLUMNS_DEFAULT).map(function (column) {
+      return { id: column.id, label: column.label };
+    });
     if (!view.planDrafts) {
       view.planDrafts = cached('plan').map(function (item) {
-        return {
+        var draft = {
           id: item.id || uid(),
           grade: Number(item.grade) || 5,
           lessonNo: item.lessonNo || '',
           number: item.number || '',
           title: item.title || '',
+          practical: !!item.practical,
           slideId: item.slideId || '',
-          workId: item.workId || ''
+          workId: item.workId || '',
+          custom: item.custom || {}
         };
+        if (cached('slides').every(function (resource) { return resource.id !== draft.slideId || Number(resource.grade) !== draft.grade; })) draft.slideId = '';
+        if (cached('works').every(function (resource) { return resource.id !== draft.workId || Number(resource.grade) !== draft.grade; })) draft.workId = '';
+        return draft;
       }).sort(function (a, b) {
         return Number(a.grade) - Number(b.grade) ||
           String(a.lessonNo || '').localeCompare(String(b.lessonNo || ''), 'ru', { numeric: true });
       });
     }
 
-    function options(kind, selectedId) {
+    function options(kind, selectedId, grade) {
       var resources = cached(kind).slice().sort(function (a, b) {
         return Number(a.grade) - Number(b.grade) ||
           String(a.number || '').localeCompare(String(b.number || ''), 'ru', { numeric: true }) ||
           String(a.title || '').localeCompare(String(b.title || ''), 'ru');
       });
+      resources = resources.filter(function (item) { return Number(item.grade) === Number(grade); });
       return '<option value="">Не прикреплять</option>' + resources.map(function (item) {
         var title = item.grade + ' класс · ' + (item.number ? '№ ' + item.number + ' · ' : '') + item.title;
         return '<option value="' + esc(item.id) + '"' + (item.id === selectedId ? ' selected' : '') + '>' + esc(title) + '</option>';
       }).join('');
     }
+    function columnEditor() {
+      return '<div class="plan-columns"><div class="plan-columns__head"><strong>Столбцы таблицы</strong><button class="btn btn--sm" type="button" id="plan-add-column">Добавить столбец</button></div>' +
+        '<div class="plan-columns__list">' + view.planColumns.map(function (column, index) {
+          return '<div class="plan-column"><input class="input" data-plan-column-label="' + index + '" aria-label="Название столбца" value="' + esc(column.label) + '">' +
+            '<button class="btn btn--sm btn--danger" type="button" data-plan-column-remove="' + index + '" aria-label="Удалить столбец">×</button></div>';
+        }).join('') + '</div><small>Поля можно переименовывать, добавлять и удалять. Столбец «Практическая работа» показывает прикреплённую работу и отметку о практической теме.</small></div>';
+    }
 
     body.innerHTML =
       '<div class="panel plan-editor"><h2>Поурочное планирование</h2>' +
       '<p class="hint">Вставьте темы списком из таблицы, затем в строках выберите класс и прикрепите материалы. Можно также добавить пустую строку вручную.</p>' +
+      columnEditor() +
       '<div class="plan-import"><div class="field"><label for="plan-grade-default">Класс для вставляемых строк</label><select class="input" id="plan-grade-default">' + gradeOptions(5) + '</select></div>' +
       '<div class="field"><label for="plan-paste">Вставьте строки из Excel или Google Таблиц</label><textarea class="input" id="plan-paste" placeholder="Урок № [Tab] № темы [Tab] Название темы&#10;Можно вставить и 4 столбца: Класс [Tab] Урок № [Tab] № темы [Tab] Название темы"></textarea><small>Порядок столбцов: урок, федеральный номер, тема. При наличии отдельного столбца класса он будет распознан автоматически.</small></div>' +
       '<div class="actions"><button class="btn btn--primary" type="button" id="plan-import">Добавить темы из списка</button><button class="btn" type="button" id="plan-add-row">Добавить строку</button></div></div>' +
-      '<form id="pf"><div class="plan-table-wrap"><table class="plan-admin-table"><thead><tr><th>Класс</th><th>Урок</th><th>№ темы</th><th>Тема</th><th>Презентация</th><th>Практическая</th><th></th></tr></thead><tbody>' +
+      '<form id="pf"><div class="plan-table-wrap"><table class="plan-admin-table"><thead><tr>' +
+      view.planColumns.map(function (column) { return '<th>' + esc(column.label) + '</th>'; }).join('') +
+      '<th>Практическая тема</th><th></th></tr></thead><tbody>' +
       view.planDrafts.map(function (item, index) {
-        return '<tr data-plan-row="' + index + '">' +
-          '<td><select class="input" data-plan-field="grade" data-plan-index="' + index + '" aria-label="Класс">' + gradeOptions(item.grade) + '</select></td>' +
-          '<td><input class="input" data-plan-field="lessonNo" data-plan-index="' + index + '" aria-label="Номер урока" value="' + esc(item.lessonNo) + '"></td>' +
-          '<td><input class="input" data-plan-field="number" data-plan-index="' + index + '" aria-label="Номер темы" value="' + esc(item.number) + '"></td>' +
-          '<td><input class="input" data-plan-field="title" data-plan-index="' + index + '" aria-label="Тема урока" required value="' + esc(item.title) + '"></td>' +
-          '<td><select class="input" data-plan-field="slideId" data-plan-index="' + index + '" aria-label="Презентация">' + options('slides', item.slideId) + '</select></td>' +
-          '<td><select class="input" data-plan-field="workId" data-plan-index="' + index + '" aria-label="Практическая работа">' + options('works', item.workId) + '</select></td>' +
+        var cells = view.planColumns.map(function (column) {
+          if (column.id === 'grade') return '<td><select class="input" data-plan-field="grade" data-plan-index="' + index + '" aria-label="Класс">' + gradeOptions(item.grade) + '</select></td>';
+          if (column.id === 'lessonNo') return '<td><input class="input" data-plan-field="lessonNo" data-plan-index="' + index + '" aria-label="' + esc(column.label) + '" value="' + esc(item.lessonNo) + '"></td>';
+          if (column.id === 'number') return '<td><input class="input" data-plan-field="number" data-plan-index="' + index + '" aria-label="' + esc(column.label) + '" value="' + esc(item.number) + '"></td>';
+          if (column.id === 'title') return '<td><input class="input" data-plan-field="title" data-plan-index="' + index + '" aria-label="' + esc(column.label) + '" required value="' + esc(item.title) + '"></td>';
+          if (column.id === 'slideId') return '<td><select class="input" data-plan-field="slideId" data-plan-index="' + index + '" aria-label="' + esc(column.label) + '">' + options('slides', item.slideId, item.grade) + '</select></td>';
+          if (column.id === 'workId') return '<td><select class="input" data-plan-field="workId" data-plan-index="' + index + '" aria-label="' + esc(column.label) + '">' + options('works', item.workId, item.grade) + '</select></td>';
+          return '<td><input class="input" data-plan-custom="' + esc(column.id) + '" data-plan-index="' + index + '" aria-label="' + esc(column.label) + '" value="' + esc(item.custom[column.id] || '') + '"></td>';
+        }).join('');
+        return '<tr data-plan-row="' + index + '">' + cells +
+          '<td><label class="plan-practical"><input type="checkbox" data-plan-field="practical" data-plan-index="' + index + '"' + (item.practical ? ' checked' : '') + '> Практическая</label></td>' +
           '<td><button class="btn btn--sm btn--danger" type="button" data-plan-remove="' + index + '" aria-label="Убрать тему">×</button></td></tr>';
       }).join('') +
       '</tbody></table>' + (view.planDrafts.length ? '' : '<div class="empty">Список тем пока пуст</div>') + '</div>' +
@@ -385,17 +410,54 @@
         view.planDrafts.splice(Number(remove.dataset.planRemove), 1);
         plan();
       });
+      table.addEventListener('change', function (e) {
+        if (e.target.dataset.planField !== 'grade') return;
+        var row = view.planDrafts[Number(e.target.dataset.planIndex)];
+        if (!row) return;
+        row.grade = Number(e.target.value);
+        if (cached('slides').every(function (x) { return x.id !== row.slideId || Number(x.grade) !== row.grade; })) row.slideId = '';
+        if (cached('works').every(function (x) { return x.id !== row.workId || Number(x.grade) !== row.grade; })) row.workId = '';
+        plan();
+      });
     }
+    body.querySelectorAll('[data-plan-column-label]').forEach(function (input) {
+      input.addEventListener('input', function () {
+        var column = view.planColumns[Number(input.dataset.planColumnLabel)];
+        if (column) column.label = input.value;
+      });
+    });
+    body.querySelectorAll('[data-plan-column-remove]').forEach(function (button) {
+      button.addEventListener('click', function () {
+      var removed = view.planColumns.splice(Number(button.dataset.planColumnRemove), 1)[0];
+      if (removed && removed.id.indexOf('custom_') === 0) {
+        view.planDrafts.forEach(function (item) { delete item.custom[removed.id]; });
+      }
+      plan();
+    });
+    });
+    document.getElementById('plan-add-column').addEventListener('click', function () {
+      var id = 'custom_' + uid();
+      view.planColumns.push({ id: id, label: 'Новый столбец' });
+      view.planDrafts.forEach(function (item) { item.custom[id] = ''; });
+      plan();
+    });
 
     function updateDraft(e) {
       var field = e.target.dataset.planField;
-      if (!field) return;
       var item = view.planDrafts[Number(e.target.dataset.planIndex)];
-      if (item) item[field] = field === 'grade' ? Number(e.target.value) : e.target.value;
+      if (!item) return;
+      if (field) {
+        item[field] = field === 'grade' ? Number(e.target.value) : (field === 'practical' ? e.target.checked : e.target.value);
+        return;
+      }
+      var custom = e.target.dataset.planCustom;
+      if (custom) item.custom[custom] = e.target.value;
     }
 
     document.getElementById('plan-add-row').addEventListener('click', function () {
-      view.planDrafts.push({ id: uid(), grade: 5, lessonNo: '', number: '', title: '', slideId: '', workId: '' });
+      var custom = {};
+      view.planColumns.forEach(function (column) { if (column.id.indexOf('custom_') === 0) custom[column.id] = ''; });
+      view.planDrafts.push({ id: uid(), grade: 5, lessonNo: '', number: '', title: '', practical: false, slideId: '', workId: '', custom: custom });
       plan();
     });
     document.getElementById('plan-import').addEventListener('click', function () {
@@ -421,7 +483,9 @@
         } else {
           title = cells[0] || '';
         }
-        view.planDrafts.push({ id: uid(), grade: grade, lessonNo: lessonNo, number: number, title: title, slideId: '', workId: '' });
+        var custom = {};
+        view.planColumns.forEach(function (column) { if (column.id.indexOf('custom_') === 0) custom[column.id] = ''; });
+        view.planDrafts.push({ id: uid(), grade: grade, lessonNo: lessonNo, number: number, title: title, practical: false, slideId: '', workId: '', custom: custom });
       });
       plan();
       W.toast('Добавлено строк: ' + rows.length);
@@ -438,8 +502,10 @@
           lessonNo: item.lessonNo.trim(),
           number: item.number.trim(),
           title: item.title.trim(),
+          practical: !!item.practical,
           slideId: item.slideId,
-          workId: item.workId
+          workId: item.workId,
+          custom: item.custom || {}
         };
       });
       if (planItems.length !== view.planDrafts.length) {
@@ -447,8 +513,9 @@
         return;
       }
       busy(btn, true);
-      mutate('plan', function () { return planItems; }, 'Обновление поурочного планирования').then(function (list) {
+      mutate('plan', function () { return planItems; }, 'Обновление поурочного планирования', 0, { columns: view.planColumns }).then(function (list) {
         view.cache = view.cache || {}; view.cache.plan = list; W.DATA.plan = list;
+        W.DATA.planColumns = view.planColumns.map(function (column) { return { id: column.id, label: column.label }; });
         view.planDrafts = null;
         W.toast('Планирование сохранено');
         plan();
@@ -481,6 +548,7 @@
     fresh[name] = true;
     readData(name).then(function (d) {
       view.cache = view.cache || {}; view.cache[name] = d.items; W.DATA[name] = d.items;
+      if (name === 'plan') W.DATA.planColumns = d.columns;
       if (JSON.stringify(d.items) !== JSON.stringify(current) && view.tab === name && !view.editing) {
         if (name === 'plan') view.planDrafts = null;
         cb();
