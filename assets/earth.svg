@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <radialGradient id="ocean" cx="34%" cy="28%" r="74%">
+      <stop stop-color="#6ca3b4"/>
+      <stop offset=".38" stop-color="#235a73"/>
+      <stop offset=".76" stop-color="#102c48"/>
+      <stop offset="1" stop-color="#07111f"/>
+    </radialGradient>
+    <linearGradient id="land" x1="120" y1="110" x2="385" y2="400" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#c1b982"/>
+      <stop offset=".48" stop-color="#758b68"/>
+      <stop offset="1" stop-color="#3d6559"/>
+    </linearGradient>
+    <radialGradient id="atmosphere">
+      <stop offset=".82" stop-color="#83d8f4" stop-opacity="0"/>
+      <stop offset=".94" stop-color="#83d8f4" stop-opacity=".12"/>
+      <stop offset="1" stop-color="#83d8f4" stop-opacity=".62"/>
+    </radialGradient>
+    <filter id="surface">
+      <feTurbulence type="fractalNoise" baseFrequency=".018" numOctaves="3" seed="8"/>
+      <feColorMatrix values=".45 0 0 0 .1 .4 0 0 0 .12 .35 0 0 0 .13 0 0 0 .2 0"/>
+      <feBlend in="SourceGraphic" mode="soft-light"/>
+    </filter>
+    <filter id="clouds" x="-10%" y="-10%" width="120%" height="120%">
+      <feTurbulence type="fractalNoise" baseFrequency=".012 .035" numOctaves="2" seed="15"/>
+      <feColorMatrix values="1 0 0 0 .5 0 1 0 0 .58 0 0 1 0 .64 0 0 0 .2 0"/>
+      <feGaussianBlur stdDeviation="3"/>
+    </filter>
+    <clipPath id="sphere"><circle cx="256" cy="256" r="220"/></clipPath>
+  </defs>
+  <circle cx="256" cy="256" r="239" fill="url(#atmosphere)"/>
+  <g clip-path="url(#sphere)">
+    <circle cx="256" cy="256" r="220" fill="url(#ocean)"/>
+    <g fill="url(#land)" stroke="#d4d0a2" stroke-opacity=".28" stroke-width="1.3" filter="url(#surface)">
+      <path d="m91 157 12-22 21-8 9-17 26-11 19 8 4 14 24 6 8 17-11 14-18 2-8 15-16 5-12 21-18 8-7 18-15-2-8-18-17-1-8-19-15-4-5-17 16-9-1-17z"/>
+      <path d="m176 225 20 6 13 16 19 7 11 20-9 20-13 9-2 23-14 28-5 32-16 25-11-8-2-25-12-17 4-23-12-20 1-24-13-15 2-23 13-16z"/>
+      <path d="m225 105 15-15 24 3 12 13 22-4 12 12 25 3 15 13 28 1 12 17-9 14-18 4-7 16-16 1-11 16-22-3-7 14-19 2-11-13-18 4-11-16-16-2-8-20 12-9-2-18-16-6-4-17z"/>
+      <path d="m267 205 18-5 17 10 5 20 15 14 1 22-13 17-4 23-16 19-4 29-17 20-16-13-5-25-15-14-2-24-12-20 4-21 15-13 2-21 15-18z"/>
+      <path d="m345 293 24-13 24 5 12 16-5 20-17 7-4 18-19 10-17-10-12-20 1-20z"/>
+      <path d="m432 344 9 3 4 10-7 7-9-5z"/>
+      <path d="m211 73 10-7 9 5-1 10-12 3z"/>
+      <path d="m287 355 10 6 6 14-7 19-8 18-9-9 4-19-5-14z"/>
+    </g>
+    <g fill="#e1e8e4" opacity=".58" filter="url(#clouds)">
+      <path d="M37 178c39-38 76 18 115-8s79 18 108-1 66 8 103-13 73 20 115 0v38c-39 24-78-11-117 12s-76-19-113 8-78-17-113 12-67-11-98 5z"/>
+      <path d="M27 285c48-30 81 13 125-9s77 14 117-8 76 19 115-8 74 10 112-8v27c-41 19-76-1-115 18s-78-12-115 13-76-13-114 9-86-8-125 12z"/>
+      <path d="M64 390c43-28 68 11 109-8s77 14 114-5 74 12 112-8 62 8 104-9v23c-39 23-72 0-109 20s-74-11-111 10-74-10-112 10-74-8-107 8z"/>
+    </g>
+    <path d="M61 157c26-70 93-121 171-121" stroke="#fff" stroke-opacity=".22" stroke-width="10" stroke-linecap="round"/>
+    <path d="M41 241c7-62 37-117 82-156" stroke="#a9eaff" stroke-opacity=".15" stroke-width="2"/>
+  </g>
+  <circle cx="256" cy="256" r="220" stroke="#a9eaff" stroke-opacity=".42" stroke-width="2"/>
+  <ellipse cx="185" cy="117" fill="#d9fff8" fill-opacity=".72" rx="3" ry="2"/>
+  <ellipse cx="205" cy="125" fill="#d9fff8" fill-opacity=".56" rx="2" ry="1.5"/>
+</svg>

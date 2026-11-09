@@ -3,6 +3,22 @@
   'use strict';
 
   var CLASSES = [5, 6, 7, 8, 9, 10, 11];
+  var MATERIAL_TYPES = {
+    general: { label: 'География', path: 'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 0c2.5 2.7 3.8 6.1 3.8 10S14.5 19.3 12 22M12 2C9.5 4.7 8.2 8.1 8.2 12s1.3 7.3 3.8 10M2 12h20' },
+    physical: { label: 'Физическая география', path: 'm2 19 6-9 4 5 4-8 6 12H2Zm13-5 2-3 5 8h-5m-6-4 3-2' },
+    lithosphere: { label: 'Литосфера', path: 'm2 17 5-7 4 4 5-9 6 12H2Zm4 3h12' },
+    hydrosphere: { label: 'Гидросфера', path: 'M12 2s7 8 7 13a7 7 0 1 1-14 0c0-5 7-13 7-13Zm-3 14a3 3 0 0 0 3 3' },
+    atmosphere: { label: 'Атмосфера', path: 'M7 18h10a4 4 0 0 0 .4-8 6 6 0 0 0-11.6 1A3.5 3.5 0 0 0 7 18Zm2-9 2-2m4 2 2-2' },
+    biosphere: { label: 'Биосфера', path: 'M20 4C10 4 5 7 5 13a5 5 0 0 0 5 5c6 0 9-6 10-14ZM4 21c3-6 7-9 13-13' },
+    cartography: { label: 'Картография', path: 'm3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3V6Zm6-3v15m6-12v15' },
+    population: { label: 'Население', path: 'M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm7-1a2.5 2.5 0 1 0 0-5m-13 14v-2a6 6 0 0 1 12 0v2H3Zm14-6a5 5 0 0 1 4 5v1h-3' },
+    economy: { label: 'Хозяйство и экономика', path: 'M3 21V10l6 4V9l6 4V5h6v16H3Zm3-3v1m4-1v1m4-1v1m3-10h1m-1 4h1' },
+    regions: { label: 'Страны и регионы', path: 'M12 22s8-7 8-13a8 8 0 1 0-16 0c0 6 8 13 8 13Zm0-10a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z' }
+  };
+  function iconMarkup(name) {
+    var type = MATERIAL_TYPES[name] || MATERIAL_TYPES.general;
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="' + type.path + '"/></svg>';
+  }
   var DATA = {
   notes: [],
   slides: [],
@@ -87,16 +103,16 @@
         '<h1>География<br><em>открывает мир</em></h1>' +
         '<p class="hero__lead">Материалы к урокам, понятные объяснения и практические задания — собраны в одном месте.</p>' +
         '<a class="btn btn--primary hero__link" href="#/notes">Перейти к материалам <span aria-hidden="true">→</span></a></div>' +
-        '<div class="hero__visual" aria-hidden="true"><div class="hero__globe"><span class="hero__globe-line"></span><span class="hero__globe-dot"></span></div><span class="hero__coordinate">55°45′N · 37°37′E</span></div>' +
+        '<div class="hero__visual" aria-hidden="true"><img class="hero__globe" src="assets/earth.svg" alt=""></div>' +
         '<div class="hero__meta"><span><b>' + cnt.notes + '</b> конспектов</span><span><b>' + cnt.terms + '</b> терминов</span><span><b>' + cnt.slides + '</b> презентаций</span><span><b>' + cnt.works + '</b> практических работ</span></div>' +
       '</div></section>' +
       '<section class="section"><div class="wrap">' +
         '<div class="section__head"><span class="section__num">01</span><h2 class="section__title">Выберите раздел</h2></div>' +
         '<div class="cards">' +
-          card('01', 'Конспекты', 'Краткие записи с уроков, сгруппированные по классам.', cnt.notes, 'материал', 'материала', 'материалов', '#/notes', 'PDF · ЧИТАТЬ') +
-          card('02', 'Термины', 'Словарь географии с определениями и примерами.', cnt.terms, 'термин', 'термина', 'терминов', '#/terms', 'ПОИСК · УЗНАВАТЬ') +
-          card('03', 'Презентации', 'Наглядные материалы к темам уроков.', cnt.slides, 'презентация', 'презентации', 'презентаций', '#/slides', 'СЛАЙДЫ · СМОТРЕТЬ') +
-          card('04', 'Практические работы', 'Задания с поиском по классу и номеру перечня.', cnt.works, 'работа', 'работы', 'работ', '#/works', 'ЗАДАНИЯ · РЕШАТЬ') +
+          card('01', 'Конспекты', 'Краткие записи с уроков, сгруппированные по классам.', cnt.notes, 'материал', 'материала', 'материалов', '#/notes') +
+          card('02', 'Термины', 'Словарь географии с определениями и примерами.', cnt.terms, 'термин', 'термина', 'терминов', '#/terms') +
+          card('03', 'Презентации', 'Наглядные материалы к темам уроков.', cnt.slides, 'презентация', 'презентации', 'презентаций', '#/slides') +
+          card('04', 'Практические работы', 'Задания с поиском по классу и номеру перечня.', cnt.works, 'работа', 'работы', 'работ', '#/works') +
         '</div>' +
         '<details class="planner" id="planner"><summary><span><span class="eyebrow">Для подготовки к уроку</span><strong>Поурочное планирование</strong><small>Темы и материалы по классам</small></span><span class="planner__toggle" aria-hidden="true">+</span></summary>' +
           '<div class="planner__body"><div class="planner__toolbar"><p>Федеральный номер поможет быстро найти тему, презентацию или практическую работу.</p><label class="planner__grade">Класс <select class="input" id="plan-grade"><option value="all">Все классы</option>' +
@@ -108,8 +124,8 @@
     reveal(app.querySelectorAll('.card'));
     document.getElementById('plan-grade').addEventListener('change', drawPlanner);
   }
-  function card(n, t, d, count, a, b, c, href, hint) {
-    return '<a class="card" href="' + href + '"><span class="card__num">' + n + '</span><span class="card__hint">' + hint + '</span><span class="card__orbit" aria-hidden="true"></span><h3>' + t + '</h3><p>' + d + '</p>' +
+  function card(n, t, d, count, a, b, c, href) {
+    return '<a class="card" href="' + href + '"><span class="card__num">' + n + '</span><h3>' + t + '</h3><p>' + d + '</p>' +
       '<div class="card__foot"><span>' + count + ' ' + plural(count, a, b, c) + '</span><span>Открыть <b aria-hidden="true">↗</b></span></div></a>';
   }
 
@@ -206,12 +222,20 @@
       });
       chips.innerHTML = h;
     }
-    function dl(href, label, name) {
-      return '<a class="btn btn--sm btn--primary" href="' + esc(encodeURI(href)) + '" download="' + esc(name || '') + '">' + label + '</a>';
+    function fileIcon(name) {
+      return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="' + name + '"/></svg>';
     }
-    function pdfPreview(href, title) {
-      return '<button class="btn btn--sm btn--primary" type="button" data-pdf="' + esc(href) +
-        '" data-pdf-title="' + esc(title) + '">Просмотреть PDF</button>';
+    function fileActions(item, base) {
+      var actions = [];
+      if (item.pptx) {
+        var type = item.pptx.toLowerCase().split('?')[0].split('.').pop();
+        actions.push('<a class="file-action" href="' + esc(encodeURI(item.pptx)) + '" download="' + esc(base + '.' + type) + '" aria-label="Скачать ' + esc(type.toUpperCase()) + '" title="Скачать ' + esc(type.toUpperCase()) + '"><span>' + esc(type.toUpperCase()) + '</span>' + fileIcon('M12 3v12m0 0 5-5m-5 5-5-5M5 19h14') + '</a>');
+      }
+      if (item.pdf) {
+        actions.push('<button class="file-action file-action--preview" type="button" data-pdf="' + esc(item.pdf) + '" data-pdf-title="' + esc(item.title) + '" aria-label="Просмотреть PDF" title="Просмотреть PDF"><span>PDF</span>' + fileIcon('M3 12s3.2-6 9-6 9 6 9 6-3.2 6-9 6-9-6-9-6Zm9-3a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z') + '</button>');
+        actions.push('<a class="file-action file-action--download" href="' + esc(encodeURI(item.pdf)) + '" download="' + esc(base + '.pdf') + '" aria-label="Скачать PDF" title="Скачать PDF">' + fileIcon('M12 3v12m0 0 5-5m-5 5-5-5M5 19h14') + '</a>');
+      }
+      return actions.length ? '<div class="item__act">' + actions.join('') + '</div>' : '<div class="item__act"><span class="item__no-file">Файл не прикреплён</span></div>';
     }
     function draw() {
       var q = norm(state.q).trim();
@@ -236,25 +260,11 @@
           return String(b.id || '').localeCompare(String(a.id || ''));
         }).forEach(function (i, index) {
           var base = String(i.title).replace(/[\\/:*?"<>|]+/g, '').trim();
-          var acts = '';
-
-if (isNotes || isWorks) {
-  if (i.pdf) {
-    acts += pdfPreview(i.pdf, i.title) + dl(i.pdf, 'Скачать PDF', base + '.pdf');
-  }
-} else {
-  if (i.pptx) {
-    acts += dl(i.pptx, 'Скачать PPTX', base + '.pptx');
-  }
-
-  if (i.pdf) {
-    acts += pdfPreview(i.pdf, i.title) + dl(i.pdf, 'Скачать PDF', base + '.pdf');
-  }
-}
-          html += '<article class="item"><div class="item__meta">' + (i.number ? '<span class="tag item__number">№ ' + highlight(i.number, state.q) + '</span>' : '') + (i.topic ? '<span class="tag">' + esc(i.topic) + '</span>' : '') + '<span class="item__ordinal">' + String(index + 1).padStart(2, '0') + '</span></div>' +
-            '<h3>' + highlight(i.title, state.q) + '</h3>' +
-            (i.description ? '<p>' + esc(i.description) + '</p>' : '') +
-            '<div class="item__act">' + (acts || '<span class="tag">файл не прикреплён</span>') + '</div></article>';
+          var category = MATERIAL_TYPES[i.icon] || MATERIAL_TYPES.general;
+          html += '<article class="item item--' + esc(kind) + '"><div class="item__symbol" aria-hidden="true">' + iconMarkup(i.icon) + '</div>' +
+            '<div class="item__main"><div class="item__meta">' + (i.number ? '<span class="tag item__number">№ ' + highlight(i.number, state.q) + '</span>' : '') + (i.topic ? '<span class="tag">' + esc(i.topic) + '</span>' : '') + '<span class="item__ordinal">' + String(index + 1).padStart(2, '0') + '</span></div>' +
+            '<h3>' + highlight(i.title, state.q) + '</h3>' + (i.description ? '<p>' + esc(i.description) + '</p>' : '') +
+            '<span class="item__category">' + esc(category.label) + '</span></div>' + fileActions(i, base) + '</article>';
         });
         html += '</div></div>';
       });
@@ -392,7 +402,8 @@ if (isNotes || isWorks) {
 
   /* экспорт для админки */
   window.Wiki = {
-    CLASSES: CLASSES, DATA: DATA, esc: esc, toast: toast, norm: norm,
+    CLASSES: CLASSES, DATA: DATA, MATERIAL_TYPES: MATERIAL_TYPES, iconMarkup: iconMarkup,
+    esc: esc, toast: toast, norm: norm,
     reload: function () { return loadAll(); },
     refresh: route
   };

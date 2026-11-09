@@ -356,3 +356,88 @@ html.theme-anim, html.theme-anim *, html.theme-anim *::before, html.theme-anim *
   .planner__table { min-width: 680px; }
   .group__title { top: 66px; }
 }
+
+.hero { min-height: 0; padding: 82px 0 54px; }
+.hero > .wrap { grid-template-columns: minmax(0, 1fr) minmax(250px, .7fr); }
+.hero__visual { overflow: visible; animation: none; }
+.hero__globe { display: block; width: min(100%, 360px); aspect-ratio: 1; border-radius: 50%; object-fit: cover; filter: drop-shadow(0 18px 34px rgba(0, 0, 0, .35)); animation: globe-rotation 100s linear infinite; }
+.hero__meta { grid-column: 1 / -1; margin-top: 30px; }
+
+.card { min-height: 190px; transform: none; }
+.card::after, .card__hint, .card__orbit { display: none; }
+.card:hover { transform: none; }
+.card h3 { margin-top: auto; }
+.card__foot span:last-child { transition: color .2s; }
+
+.list { display: flex; flex-direction: column; gap: 10px; }
+.item { display: grid; min-height: 120px; grid-template-columns: 76px minmax(0, 1fr) 140px; grid-template-rows: 1fr; align-items: center; gap: 16px; padding: 16px 22px; }
+.item__symbol { display: grid; width: 58px; height: 58px; place-items: center; border: 1px solid var(--line); border-radius: 16px; background: var(--surface-2); color: var(--accent-soft); }
+.item__symbol svg { width: 32px; height: 32px; }
+.item__main { min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 5px; text-align: center; }
+.item__meta { width: 100%; justify-content: center; flex-direction: row; align-items: center; gap: 7px; }
+.item__ordinal { margin-left: 0; }
+.item__main h3 { width: 100%; margin: 0; text-align: center; }
+.item__main p { text-align: center; }
+.item__category { color: var(--muted); font: 10px var(--mono); }
+.item__act { display: flex; grid-column: auto; grid-row: auto; justify-content: flex-end; align-items: center; gap: 7px; margin: 0; padding: 0; }
+.file-action { display: inline-flex; min-width: 42px; min-height: 38px; align-items: center; justify-content: center; gap: 6px; padding: 6px 9px; border: 1px solid var(--line-2); border-radius: 10px; background: transparent; color: var(--muted); cursor: pointer; transition: border-color .2s, color .2s, background .2s; }
+.file-action:hover { border-color: var(--accent); background: rgba(120, 152, 255, .08); color: var(--accent-soft); }
+.file-action span { font: 10px var(--mono); letter-spacing: .03em; }
+.file-action svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.file-action--download { min-width: 36px; width: 36px; padding: 6px; color: var(--accent-soft); }
+.item__no-file { color: var(--muted); font-size: 11px; }
+.term.reveal { transform: none; transition: opacity .35s ease var(--reveal-delay, 0ms); }
+.term:hover { padding-inline: 0; background: transparent; }
+.term:hover h3 { color: var(--accent-soft); }
+
+.plan-editor { padding: clamp(17px, 3vw, 28px); }
+.plan-import { display: grid; grid-template-columns: 170px minmax(0, 1fr); align-items: end; gap: 0 16px; margin: 20px 0 24px; padding: 18px; border: 1px solid var(--line); border-radius: 13px; background: var(--bg); }
+.plan-import .field { margin-bottom: 12px; }
+.plan-import .field:nth-child(2) { grid-column: 1 / -1; grid-row: 2; }
+.plan-import .actions { grid-column: 1 / -1; }
+.plan-import textarea.input { min-height: 92px; }
+.plan-import small { color: var(--muted); font-size: 11px; }
+.plan-table-wrap { max-height: 68vh; overflow: auto; border: 1px solid var(--line); border-radius: 12px; }
+.plan-admin-table { width: 100%; min-width: 1000px; border-collapse: collapse; }
+.plan-admin-table th, .plan-admin-table td { padding: 8px; border-bottom: 1px solid var(--line); vertical-align: middle; text-align: left; }
+.plan-admin-table th { position: sticky; z-index: 1; top: 0; background: var(--surface-2); color: var(--muted); font: 10px var(--mono); text-transform: uppercase; }
+.plan-admin-table tbody tr:last-child td { border-bottom: 0; }
+.plan-admin-table .input { min-width: 70px; padding: 8px 9px; font-size: 12px; }
+.plan-admin-table td:nth-child(4) { min-width: 220px; }
+.plan-admin-table td:nth-child(5), .plan-admin-table td:nth-child(6) { min-width: 190px; }
+.plan-editor > .actions { align-items: center; margin-top: 18px; }
+.plan-count { color: var(--muted); font: 11px var(--mono); }
+
+@keyframes globe-rotation { to { transform: rotate(360deg); } }
+@media (min-width: 621px) and (max-width: 1100px) {
+  .header__in { gap: 9px; }
+  .logo { font-size: 12px; }
+  .logo__sub { display: none; }
+  .nav { position: static; z-index: auto; display: flex; flex-direction: row; align-items: center; gap: clamp(8px, 1.4vw, 14px); margin-right: auto; padding: 0; transform: none; border: 0; background: transparent; transition: none; }
+  .nav a { padding: 0; border: 0; font-size: clamp(10px, 1.5vw, 12px); white-space: nowrap; }
+  .nav a.is-active::after { display: block; bottom: -7px; }
+  .ghost { display: none; }
+  .header__right { gap: 8px; margin-left: 0; }
+  .btn--admin { min-height: 32px; padding: 5px 10px; font-size: 11px; }
+  .theme-toggle { width: 32px; height: 32px; }
+  .theme-toggle svg { width: 16px; height: 16px; }
+  .burger { display: none; }
+  .hero > .wrap { grid-template-columns: minmax(0, 1fr) minmax(200px, .55fr); }
+  .hero__globe { width: min(100%, 280px); }
+}
+@media (max-width: 620px) {
+  .hero { padding: 62px 0 48px; }
+  .hero > .wrap { display: block; }
+  .hero__visual { position: absolute; top: 72px; right: -72px; width: 205px; min-height: 205px; opacity: .28; }
+  .hero__globe { width: 205px; }
+  .hero__content { min-height: 0; }
+  .hero__meta { margin-top: 36px; }
+  .item { grid-template-columns: 48px minmax(0, 1fr); grid-template-rows: auto auto; gap: 9px 13px; padding: 15px; }
+  .item__symbol { width: 44px; height: 44px; grid-column: 1; grid-row: 1; border-radius: 12px; }
+  .item__symbol svg { width: 25px; height: 25px; }
+  .item__main { grid-column: 2; grid-row: 1; }
+  .item__act { grid-column: 1 / -1; grid-row: 2; justify-content: center; }
+  .plan-import { grid-template-columns: 1fr; padding: 13px; }
+  .plan-import .field:nth-child(2) { grid-column: 1; }
+  .plan-import .actions { grid-column: 1; }
+}

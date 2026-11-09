@@ -226,6 +226,11 @@
       ((!isNotes)
         ? '<div class="field"><label>Номер по федеральному перечню (необязательно)</label><input class="input" id="m-number" value="' + esc(ed.number || '') + '" placeholder="Например: 2.3.1"></div>'
         : '') +
+      ((!isNotes)
+        ? '<div class="field"><label for="m-icon">Значок темы материала</label><select class="input" id="m-icon">' + Object.keys(W.MATERIAL_TYPES).map(function (key) {
+          return '<option value="' + key + '"' + ((ed.icon || 'general') === key ? ' selected' : '') + '>' + esc(W.MATERIAL_TYPES[key].label) + '</option>';
+        }).join('') + '</select></div>'
+        : '') +
       '<div class="field"><label>Класс</label><select class="input" id="m-grade">' + gradeOptions(ed.grade || 5) + '</select></div>' +
       '<div class="field"><label>Описание (необязательно)</label><textarea class="input" id="m-desc" style="min-height:80px">' + esc(ed.description || '') + '</textarea></div>' +
       ((isNotes || isWorks)
@@ -281,7 +286,10 @@
 
       var id = ed.id || uid();
       var rec = { id: id, title: title, grade: grade, description: desc, pdf: ed.pdf || '', pptx: ed.pptx || '' };
-      if (!isNotes) rec.number = document.getElementById('m-number').value.trim();
+      if (!isNotes) {
+        rec.number = document.getElementById('m-number').value.trim();
+        rec.icon = document.getElementById('m-icon').value;
+      }
       var dir = 'files/' + kind + '/' + grade + '/';
       var base = id + '-' + slug(title);
       var oldPaths = [];
@@ -318,12 +326,22 @@
 
   function plan() {
     var body = document.getElementById('body');
-    var items = cached('plan').slice().sort(function (a, b) {
-      return Number(a.grade) - Number(b.grade) ||
-        String(a.lessonNo || '').localeCompare(String(b.lessonNo || ''), 'ru', { numeric: true });
-    });
-    var ed = view.editing ? items.filter(function (item) { return item.id === view.editing; })[0] : null;
-    ed = ed || {};
+    if (!view.planDrafts) {
+      view.planDrafts = cached('plan').map(function (item) {
+        return {
+          id: item.id || uid(),
+          grade: Number(item.grade) || 5,
+          lessonNo: item.lessonNo || '',
+          number: item.number || '',
+          title: item.title || '',
+          slideId: item.slideId || '',
+          workId: item.workId || ''
+        };
+      }).sort(function (a, b) {
+        return Number(a.grade) - Number(b.grade) ||
+          String(a.lessonNo || '').localeCompare(String(b.lessonNo || ''), 'ru', { numeric: true });
+      });
+    }
 
     function options(kind, selectedId) {
       var resources = cached(kind).slice().sort(function (a, b) {
@@ -338,56 +356,105 @@
     }
 
     body.innerHTML =
-      '<div class="admin-grid"><div class="panel"><h2>' + (ed.id ? 'Изменить тему' : 'Новая тема планирования') + '</h2>' +
-      '<p class="hint">Добавьте тему федерального планирования и при необходимости прикрепите к ней презентацию и практическую работу.</p>' +
-      '<form id="pf">' +
-      '<div class="field"><label for="p-title">Тема урока</label><input class="input" id="p-title" required value="' + esc(ed.title || '') + '" placeholder="Например: Реки России"></div>' +
-      '<div class="field"><label for="p-grade">Класс</label><select class="input" id="p-grade">' + gradeOptions(ed.grade || 5) + '</select></div>' +
-      '<div class="field"><label for="p-lesson">Номер урока</label><input class="input" id="p-lesson" value="' + esc(ed.lessonNo || '') + '" placeholder="Например: 12"></div>' +
-      '<div class="field"><label for="p-number">Номер темы по федеральному перечню</label><input class="input" id="p-number" value="' + esc(ed.number || '') + '" placeholder="Например: 2.3.1"></div>' +
-      '<div class="field"><label for="p-slide">Презентация</label><select class="input" id="p-slide">' + options('slides', ed.slideId) + '</select></div>' +
-      '<div class="field"><label for="p-work">Практическая работа</label><select class="input" id="p-work">' + options('works', ed.workId) + '</select></div>' +
-      '<div class="actions"><button class="btn btn--primary" type="submit">' + (ed.id ? 'Сохранить' : 'Добавить тему') + '</button>' +
-      (ed.id ? '<button class="btn" type="button" id="p-cancel">Отмена</button>' : '') + '</div></form></div>' +
-      '<div><div class="admin-list" id="pl">' + (items.length ? items.map(function (item) {
-        return '<div class="arow"><div class="arow__t"><b>' + esc(item.title) + '</b><span>' + esc(item.grade) + ' класс · урок ' + esc(item.lessonNo || '—') + ' · № ' + esc(item.number || '—') + '</span></div><div class="arow__a">' +
-          '<button class="btn btn--sm" data-e="' + esc(item.id) + '">Изменить</button><button class="btn btn--sm btn--danger" data-d="' + esc(item.id) + '">Удалить</button></div></div>';
-      }).join('') : '<div class="empty">Тем пока нет. Добавьте первую тему или подключите материалы через форму слева.</div>') + '</div></div></div>';
+      '<div class="panel plan-editor"><h2>Поурочное планирование</h2>' +
+      '<p class="hint">Вставьте темы списком из таблицы, затем в строках выберите класс и прикрепите материалы. Можно также добавить пустую строку вручную.</p>' +
+      '<div class="plan-import"><div class="field"><label for="plan-grade-default">Класс для вставляемых строк</label><select class="input" id="plan-grade-default">' + gradeOptions(5) + '</select></div>' +
+      '<div class="field"><label for="plan-paste">Вставьте строки из Excel или Google Таблиц</label><textarea class="input" id="plan-paste" placeholder="Урок № [Tab] № темы [Tab] Название темы&#10;Можно вставить и 4 столбца: Класс [Tab] Урок № [Tab] № темы [Tab] Название темы"></textarea><small>Порядок столбцов: урок, федеральный номер, тема. При наличии отдельного столбца класса он будет распознан автоматически.</small></div>' +
+      '<div class="actions"><button class="btn btn--primary" type="button" id="plan-import">Добавить темы из списка</button><button class="btn" type="button" id="plan-add-row">Добавить строку</button></div></div>' +
+      '<form id="pf"><div class="plan-table-wrap"><table class="plan-admin-table"><thead><tr><th>Класс</th><th>Урок</th><th>№ темы</th><th>Тема</th><th>Презентация</th><th>Практическая</th><th></th></tr></thead><tbody>' +
+      view.planDrafts.map(function (item, index) {
+        return '<tr data-plan-row="' + index + '">' +
+          '<td><select class="input" data-plan-field="grade" data-plan-index="' + index + '" aria-label="Класс">' + gradeOptions(item.grade) + '</select></td>' +
+          '<td><input class="input" data-plan-field="lessonNo" data-plan-index="' + index + '" aria-label="Номер урока" value="' + esc(item.lessonNo) + '"></td>' +
+          '<td><input class="input" data-plan-field="number" data-plan-index="' + index + '" aria-label="Номер темы" value="' + esc(item.number) + '"></td>' +
+          '<td><input class="input" data-plan-field="title" data-plan-index="' + index + '" aria-label="Тема урока" required value="' + esc(item.title) + '"></td>' +
+          '<td><select class="input" data-plan-field="slideId" data-plan-index="' + index + '" aria-label="Презентация">' + options('slides', item.slideId) + '</select></td>' +
+          '<td><select class="input" data-plan-field="workId" data-plan-index="' + index + '" aria-label="Практическая работа">' + options('works', item.workId) + '</select></td>' +
+          '<td><button class="btn btn--sm btn--danger" type="button" data-plan-remove="' + index + '" aria-label="Убрать тему">×</button></td></tr>';
+      }).join('') +
+      '</tbody></table>' + (view.planDrafts.length ? '' : '<div class="empty">Список тем пока пуст</div>') + '</div>' +
+      '<div class="actions"><button class="btn btn--primary" type="submit">Сохранить всё планирование</button><span class="plan-count">' + view.planDrafts.length + ' тем</span></div></form></div>';
 
-    var cancel = document.getElementById('p-cancel');
-    if (cancel) cancel.addEventListener('click', function () { view.editing = null; plan(); });
-    document.getElementById('pl').addEventListener('click', function (e) {
-      var edit = e.target.closest('[data-e]'), del = e.target.closest('[data-d]');
-      if (edit) { view.editing = edit.dataset.e; plan(); window.scrollTo(0, 0); }
-      if (del) removeItem('plan', del.dataset.d, del);
+    var table = body.querySelector('.plan-admin-table');
+    if (table) {
+      table.addEventListener('input', updateDraft);
+      table.addEventListener('change', updateDraft);
+      table.addEventListener('click', function (e) {
+        var remove = e.target.closest('[data-plan-remove]');
+        if (!remove) return;
+        view.planDrafts.splice(Number(remove.dataset.planRemove), 1);
+        plan();
+      });
+    }
+
+    function updateDraft(e) {
+      var field = e.target.dataset.planField;
+      if (!field) return;
+      var item = view.planDrafts[Number(e.target.dataset.planIndex)];
+      if (item) item[field] = field === 'grade' ? Number(e.target.value) : e.target.value;
+    }
+
+    document.getElementById('plan-add-row').addEventListener('click', function () {
+      view.planDrafts.push({ id: uid(), grade: 5, lessonNo: '', number: '', title: '', slideId: '', workId: '' });
+      plan();
     });
+    document.getElementById('plan-import').addEventListener('click', function () {
+      var pasted = document.getElementById('plan-paste').value.trim();
+      if (!pasted) { W.toast('Вставьте список тем', true); return; }
+      var defaultGrade = Number(document.getElementById('plan-grade-default').value);
+      var rows = pasted.split(/\r?\n/).map(function (line) {
+        return line.split(/\t|;/).map(function (cell) { return cell.trim(); });
+      }).filter(function (cells) {
+        return cells.some(Boolean) && !/^(?:класс|№?\s*урок|урок|номер)/i.test(cells[0]);
+      });
+      if (!rows.length) { W.toast('Не удалось найти строки с темами', true); return; }
+      rows.forEach(function (cells) {
+        var grade = defaultGrade;
+        if (cells.length >= 4 && /^(?:[5-9]|10|11)(?:\s*класс)?$/i.test(cells[0])) {
+          grade = Number(cells.shift().replace(/\s*класс/i, ''));
+        }
+        var lessonNo = '', number = '', title = '';
+        if (cells.length >= 3) {
+          lessonNo = cells[0]; number = cells[1]; title = cells.slice(2).join(' ');
+        } else if (cells.length === 2) {
+          number = cells[0]; title = cells[1];
+        } else {
+          title = cells[0] || '';
+        }
+        view.planDrafts.push({ id: uid(), grade: grade, lessonNo: lessonNo, number: number, title: title, slideId: '', workId: '' });
+      });
+      plan();
+      W.toast('Добавлено строк: ' + rows.length);
+    });
+
     document.getElementById('pf').addEventListener('submit', function (e) {
       e.preventDefault();
       if (!isReady()) { W.toast('Сначала подключите GitHub во вкладке «Настройки»', true); return; }
       var btn = e.target.querySelector('[type=submit]');
-      var rec = {
-        id: ed.id || uid(),
-        grade: Number(document.getElementById('p-grade').value),
-        lessonNo: document.getElementById('p-lesson').value.trim(),
-        number: document.getElementById('p-number').value.trim(),
-        title: document.getElementById('p-title').value.trim(),
-        slideId: document.getElementById('p-slide').value,
-        workId: document.getElementById('p-work').value
-      };
+      var planItems = view.planDrafts.filter(function (item) { return item.title.trim(); }).map(function (item) {
+        return {
+          id: item.id || uid(),
+          grade: Number(item.grade),
+          lessonNo: item.lessonNo.trim(),
+          number: item.number.trim(),
+          title: item.title.trim(),
+          slideId: item.slideId,
+          workId: item.workId
+        };
+      });
+      if (planItems.length !== view.planDrafts.length) {
+        W.toast('Заполните или удалите все строки без названия темы', true);
+        return;
+      }
       busy(btn, true);
-      mutate('plan', function (list) {
-        var index = -1;
-        list.forEach(function (item, i) { if (item.id === rec.id) index = i; });
-        if (index > -1) list[index] = rec; else list.push(rec);
-        return list;
-      }, (ed.id ? 'Изменение темы: ' : 'Добавление темы: ') + rec.title).then(function (list) {
+      mutate('plan', function () { return planItems; }, 'Обновление поурочного планирования').then(function (list) {
         view.cache = view.cache || {}; view.cache.plan = list; W.DATA.plan = list;
-        view.editing = null;
-        W.toast(ed.id ? 'Изменения сохранены' : 'Тема добавлена');
+        view.planDrafts = null;
+        W.toast('Планирование сохранено');
         plan();
       }).catch(function (err) { busy(btn, false); W.toast(err.message, true); });
     });
-    refreshFresh('plan', plan, items);
+    refreshFresh('plan', plan, cached('plan'));
   }
 
   function removeItem(kind, id, btn) {
@@ -414,7 +481,10 @@
     fresh[name] = true;
     readData(name).then(function (d) {
       view.cache = view.cache || {}; view.cache[name] = d.items; W.DATA[name] = d.items;
-      if (JSON.stringify(d.items) !== JSON.stringify(current) && view.tab === name && !view.editing) cb();
+      if (JSON.stringify(d.items) !== JSON.stringify(current) && view.tab === name && !view.editing) {
+        if (name === 'plan') view.planDrafts = null;
+        cb();
+      }
     }).catch(function () { fresh[name] = false; });
   }
 
