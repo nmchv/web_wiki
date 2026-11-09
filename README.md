@@ -4,7 +4,7 @@
 
 ## Запуск
 1. Создайте репозиторий на GitHub (например `wiki`) и загрузите в него **содержимое этой папки** (`index.html` должен лежать в корне).
-2. Settings → Pages → Source: *Deploy from a branch* → ветка `main`, папка `/ (root)`.
+2. Settings → Pages → Build and deployment → Source: *GitHub Actions*. Workflow `.github/workflows/pages.yml` автоматически публикует содержимое корня при каждом push в `main`.
 3. Settings → Pages → Custom domain: `wiki.nmchv.ru` (файл `CNAME` уже есть), включите *Enforce HTTPS*.
 4. В DNS для `wiki.nmchv.ru` создайте CNAME-запись на `<ваш-логин>.github.io`.
 
